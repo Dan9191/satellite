@@ -26,7 +26,7 @@ public class FacilityUploadController {
 
     @GetMapping("/test")
     public ResponseEntity test() {
-        return ResponseEntity.ok().body("asdasd");
+        return ResponseEntity.ok().body("asdaslld");
     }
 
     /**
