@@ -69,4 +69,5 @@ public class SatelliteFacilitySessionJdbcRepositoryImpl implements SatelliteFaci
             throw new RuntimeException("CommunicationSession saving error", e);
         }
     }
+
 }

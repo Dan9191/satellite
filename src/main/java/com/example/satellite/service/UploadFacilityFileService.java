@@ -3,11 +3,9 @@ package com.example.satellite.service;
 import com.example.satellite.entity.Facility;
 import com.example.satellite.entity.Satellite;
 import com.example.satellite.entity.SatelliteFacilitySession;
+import com.example.satellite.entity.UploadedFile;
 import com.example.satellite.models.CommunicationSession;
-import com.example.satellite.repository.FacilityRepository;
-import com.example.satellite.repository.SatelliteFacilitySessionRepository;
-import com.example.satellite.repository.SatelliteRepository;
-import com.example.satellite.repository.SatelliteTypeRepository;
+import com.example.satellite.repository.*;
 import com.example.satellite.utils.ValidateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,9 +45,19 @@ public class UploadFacilityFileService {
 
     private final SatelliteFacilitySessionRepository satelliteFacilitySessionRepository;
 
+    private final UploadedFilesRepository uploadedFilesRepository;
+
+
+
 
     public void readFile(MultipartFile file) throws IOException {
         String baseFileName = FilenameUtils.getBaseName(file.getOriginalFilename());
+        //проверка начилия файла в БД
+        if (uploadedFilesRepository.findByName(baseFileName).isEmpty()) {
+            throw new IOException("Файл с таким именем уже загружен в базу данных.");
+        } else{
+            uploadedFilesRepository.save(new UploadedFile(baseFileName));
+        }
         String facilityName = baseFileName.replaceAll(FACILITY_NAME_PREFIX, "");
         List<String> allRows = new BufferedReader(new InputStreamReader(file.getInputStream())).lines().toList();
         Map<String, List<CommunicationSession>> sessionMap = parseFile(allRows, baseFileName);
