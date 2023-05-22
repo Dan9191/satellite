@@ -15,7 +15,7 @@ public class UploadedFile {
     @Column(name="id")
     private Integer id;
 
-    @Column(name = "name")
+    @Column(name = "file_name")
     private String name;
 
     public UploadedFile(String name){

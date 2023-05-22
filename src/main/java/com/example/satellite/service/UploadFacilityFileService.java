@@ -53,10 +53,8 @@ public class UploadFacilityFileService {
     public void readFile(MultipartFile file) throws IOException {
         String baseFileName = FilenameUtils.getBaseName(file.getOriginalFilename());
         //проверка начилия файла в БД
-        if (uploadedFilesRepository.findByName(baseFileName).isEmpty()) {
+        if (!uploadedFilesRepository.findByName(baseFileName).isEmpty()) {
             throw new IOException("Файл с таким именем уже загружен в базу данных.");
-        } else{
-            uploadedFilesRepository.save(new UploadedFile(baseFileName));
         }
         String facilityName = baseFileName.replaceAll(FACILITY_NAME_PREFIX, "");
         List<String> allRows = new BufferedReader(new InputStreamReader(file.getInputStream())).lines().toList();
@@ -88,7 +86,7 @@ public class UploadFacilityFileService {
                     .toList();
             satelliteFacilitySessionRepository.saveBatch(sessionList);
         });
-
+        uploadedFilesRepository.save(new UploadedFile(baseFileName));
     }
 
     private Map<String, List<CommunicationSession>> parseFile(List<String> allRows, String baseFileName) {
