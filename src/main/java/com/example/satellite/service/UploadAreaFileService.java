@@ -1,22 +1,14 @@
 package com.example.satellite.service;
 
-import com.example.satellite.entity.Area;
-import com.example.satellite.entity.Facility;
-import com.example.satellite.entity.Satellite;
-import com.example.satellite.entity.SatelliteAreaSession;
-import com.example.satellite.entity.SatelliteFacilitySession;
+import com.example.satellite.entity.*;
 import com.example.satellite.models.CommunicationSession;
-import com.example.satellite.repository.AreaRepository;
-import com.example.satellite.repository.FacilityRepository;
-import com.example.satellite.repository.SatelliteAreaSessionRepository;
-import com.example.satellite.repository.SatelliteFacilitySessionRepository;
-import com.example.satellite.repository.SatelliteRepository;
-import com.example.satellite.repository.SatelliteTypeRepository;
+import com.example.satellite.repository.*;
 import com.example.satellite.utils.ValidateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -49,13 +41,21 @@ public class UploadAreaFileService {
 
     private final SatelliteAreaSessionRepository satelliteAreaSessionRepository;
 
+    private final UploadedFilesRepository uploadedFilesRepository;
 
+    private final GreedyFacilityScheduleService greedyFacilityScheduleService;
+
+
+    @Transactional
     public void readFile(MultipartFile file) throws IOException {
         String baseFileName = FilenameUtils.getBaseName(file.getOriginalFilename());
+        //проверка начилия файла в БД
+        if (uploadedFilesRepository.findByName(baseFileName).isPresent()) {
+            throw new IOException("Файл с таким именем уже загружен в базу данных.");
+        }
         String areaName = baseFileName.replaceAll(AREA_NAME_PREFIX, "");
         List<String> allRows = new BufferedReader(new InputStreamReader(file.getInputStream())).lines().toList();
         Map<String, List<CommunicationSession>> sessionMap = parseFile(allRows);
-
         Area area = areaRepository.findFirstByName(areaName).orElse(new Area(areaName));
         areaRepository.save(area);
         sessionMap.forEach((key, value) -> {
@@ -87,9 +87,16 @@ public class UploadAreaFileService {
                     .toList();
             satelliteAreaSessionRepository.saveBatch(sessionList);
         });
-
+        uploadedFilesRepository.save(new UploadedFile(baseFileName));
     }
 
+
+    /**
+     * Извлечение содержимого файла и группировка расписаний по спутникам.
+     *
+     * @param allRows Содержимое файла
+     * @return Расписание сеансов с каждым из спутников
+     */
     private Map<String, List<CommunicationSession>> parseFile(List<String> allRows) {
         Map<String, List<CommunicationSession>> communicationMap = new HashMap<>();
         List<String> satelliteList = getSatelliteNames(allRows);
@@ -182,12 +189,12 @@ public class UploadAreaFileService {
         LocalDateTime startSessionTime = LocalDateTime.parse(prepareAttr.get(1), DATE_TIME_FORMATTER);
         LocalDateTime endSessionTime = LocalDateTime.parse(prepareAttr.get(2), DATE_TIME_FORMATTER);
         float duration = Float.parseFloat(prepareAttr.get(3));
-        CommunicationSession communicationSchedule = new CommunicationSession();
-        communicationSchedule.setNumber(number);
-        communicationSchedule.setStartSessionTime(startSessionTime);
-        communicationSchedule.setEndSessionTime(endSessionTime);
-        communicationSchedule.setDuration(duration);
-        return communicationSchedule;
+        CommunicationSession communicationSession = new CommunicationSession();
+        communicationSession.setNumber(number);
+        communicationSession.setStartSessionTime(startSessionTime);
+        communicationSession.setEndSessionTime(endSessionTime);
+        communicationSession.setDuration(duration);
+        return communicationSession;
     }
 
 }

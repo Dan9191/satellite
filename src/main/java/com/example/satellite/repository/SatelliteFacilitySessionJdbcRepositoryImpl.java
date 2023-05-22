@@ -1,5 +1,6 @@
 package com.example.satellite.repository;
 
+import com.example.satellite.config.SatelliteProperties;
 import com.example.satellite.entity.SatelliteFacilitySession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +17,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
-import static com.example.satellite.utils.ConstantUtils.SCHEMA_NAME;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -27,6 +26,12 @@ public class SatelliteFacilitySessionJdbcRepositoryImpl implements SatelliteFaci
      * Jdbc-шаблон.
      */
     private final JdbcTemplate jdbcTemplate;
+
+    /**
+     * Настройки приложения.
+     */
+    private final SatelliteProperties properties;
+
 
     private static final String INSERT_SESSION = "insert into %s.satellite_facility_session("
             + "satellite_id, facility_id, order_number, start_session_time, end_session_time, duration"
@@ -41,7 +46,7 @@ public class SatelliteFacilitySessionJdbcRepositoryImpl implements SatelliteFaci
     @Override
     public void saveBatch(List<SatelliteFacilitySession> sessionList) {
         try (Connection connection = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
-            PreparedStatement ps = connection.prepareStatement(String.format(INSERT_SESSION, SCHEMA_NAME),
+            PreparedStatement ps = connection.prepareStatement(String.format(INSERT_SESSION, properties.getSchemaName()),
                     Statement.RETURN_GENERATED_KEYS);
 
             for (SatelliteFacilitySession session : sessionList) {
@@ -69,4 +74,5 @@ public class SatelliteFacilitySessionJdbcRepositoryImpl implements SatelliteFaci
             throw new RuntimeException("CommunicationSession saving error", e);
         }
     }
+
 }
