@@ -100,9 +100,3 @@ comment on column satellite_area_session.order_number is 'Порядковый �
 comment on column satellite_area_session.start_session_time is 'Начало сеанса вхождения на территорию РФ';
 comment on column satellite_area_session.end_session_time is 'Конец сеанса вхождения на территорию РФ';
 comment on column satellite_area_session.duration is 'Продолжительность сеанса вхождения на территорию РФ';
-
-create table uploadedFiles (
-    id serial PRIMARY KEY,
-    file_name text not null
-)
-

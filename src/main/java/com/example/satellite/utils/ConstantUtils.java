@@ -10,7 +10,6 @@ public class ConstantUtils {
 
     public static String FACILITY_NAME_PREFIX = "Facility-";
 
-
     public static String AREA_NAME_PREFIX = "AreaTarget-Russia-To-Satellite-KinoSat_";
 
     public static String SATELLITE_NAME_PREFIX = "Satellite-";
@@ -21,9 +20,13 @@ public class ConstantUtils {
 
     public static String TO = "-To-";
 
-    public static String SCHEMA_NAME = "sat";
-
+    /**
+     * Маска для разложения дат.
+     */
     public static DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("d MMM yyyy HH:mm:ss.SSS", Locale.ENGLISH );;
 
+    /**
+     * Маска для поиска строк-расписаний.
+     */
     public static Pattern SESSION_MATCHES_SIGN = Pattern.compile("^\\s+(\\d{1,3})(\\s+)(\\d{1,2})\\sJun\\s2027\\s(\\d\\d:\\d\\d:\\d\\d.\\d\\d\\d)\\s+(\\d{1,2})\\sJun\\s2027\\s(\\d\\d:\\d\\d:\\d\\d.\\d\\d\\d)\\s+(\\d{1,3}.\\d\\d\\d)$");
 }

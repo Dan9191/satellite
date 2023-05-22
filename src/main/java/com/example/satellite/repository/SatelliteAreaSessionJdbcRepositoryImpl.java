@@ -1,7 +1,7 @@
 package com.example.satellite.repository;
 
+import com.example.satellite.config.SatelliteProperties;
 import com.example.satellite.entity.SatelliteAreaSession;
-import com.example.satellite.entity.SatelliteFacilitySession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -17,7 +17,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
-import static com.example.satellite.utils.ConstantUtils.SCHEMA_NAME;
 
 @Slf4j
 @Component
@@ -28,6 +27,11 @@ public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSess
      * Jdbc-шаблон.
      */
     private final JdbcTemplate jdbcTemplate;
+
+    /**
+     * Настройки приложения.
+     */
+    private final SatelliteProperties properties;
 
     private static final String INSERT_SESSION = "insert into %s.satellite_area_session("
             + "satellite_id, area_id, order_number, start_session_time, end_session_time, duration"
@@ -42,7 +46,7 @@ public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSess
     @Override
     public void saveBatch(List<SatelliteAreaSession> sessionList) {
         try (Connection connection = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
-            PreparedStatement ps = connection.prepareStatement(String.format(INSERT_SESSION, SCHEMA_NAME),
+            PreparedStatement ps = connection.prepareStatement(String.format(INSERT_SESSION, properties.getSchemaName()),
                     Statement.RETURN_GENERATED_KEYS);
 
             for (SatelliteAreaSession session : sessionList) {

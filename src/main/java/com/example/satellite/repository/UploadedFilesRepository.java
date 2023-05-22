@@ -4,9 +4,9 @@ import com.example.satellite.entity.UploadedFile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UploadedFilesRepository extends JpaRepository<UploadedFile, Integer> {
-    List<UploadedFile> findByName(String name);
+    Optional<UploadedFile> findByName(String name);
 }

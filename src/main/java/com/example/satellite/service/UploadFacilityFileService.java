@@ -10,10 +10,12 @@ import com.example.satellite.utils.ValidateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import org.apache.commons.io.FilenameUtils;
 
+import java.beans.Transient;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -48,19 +50,24 @@ public class UploadFacilityFileService {
     private final UploadedFilesRepository uploadedFilesRepository;
 
 
-
-
+    /**
+     * Извлечение содержимого файла и сохранение расписаний
+     *
+     * @param file Загружаемый файл.
+     * @throws IOException
+     */
+    @Transactional
     public void readFile(MultipartFile file) throws IOException {
         String baseFileName = FilenameUtils.getBaseName(file.getOriginalFilename());
         //проверка начилия файла в БД
-        if (!uploadedFilesRepository.findByName(baseFileName).isEmpty()) {
+        if (uploadedFilesRepository.findByName(baseFileName).isPresent()) {
             throw new IOException("Файл с таким именем уже загружен в базу данных.");
         }
         String facilityName = baseFileName.replaceAll(FACILITY_NAME_PREFIX, "");
         List<String> allRows = new BufferedReader(new InputStreamReader(file.getInputStream())).lines().toList();
         Map<String, List<CommunicationSession>> sessionMap = parseFile(allRows, baseFileName);
 
-        Facility facility = facilityRepository.findFirstByName(facilityName).orElse(new Facility(facilityName));
+        Facility facility = facilityRepository.findByName(facilityName).orElse(new Facility(facilityName));
         facilityRepository.save(facility);
         sessionMap.forEach((key, value) -> {
             Satellite satellite;
@@ -89,6 +96,13 @@ public class UploadFacilityFileService {
         uploadedFilesRepository.save(new UploadedFile(baseFileName));
     }
 
+    /**
+     * Извлечение содержимого файла и группировка расписаний по спутникам.
+     *
+     * @param allRows      Содержимое файла
+     * @param baseFileName Название приемника.
+     * @return Расписание сеансов с каждым из спутников
+     */
     private Map<String, List<CommunicationSession>> parseFile(List<String> allRows, String baseFileName) {
         Map<String, List<CommunicationSession>> communicationMap = new HashMap<>();
         List<String> satelliteList = getSatelliteNames(allRows, baseFileName);
@@ -183,12 +197,12 @@ public class UploadFacilityFileService {
         LocalDateTime startSessionTime = LocalDateTime.parse(prepareAttr.get(1), DATE_TIME_FORMATTER);
         LocalDateTime endSessionTime = LocalDateTime.parse(prepareAttr.get(2), DATE_TIME_FORMATTER);
         float duration = Float.parseFloat(prepareAttr.get(3));
-        CommunicationSession communicationSchedule = new CommunicationSession();
-        communicationSchedule.setNumber(number);
-        communicationSchedule.setStartSessionTime(startSessionTime);
-        communicationSchedule.setEndSessionTime(endSessionTime);
-        communicationSchedule.setDuration(duration);
-        return communicationSchedule;
+        CommunicationSession communicationSession = new CommunicationSession();
+        communicationSession.setNumber(number);
+        communicationSession.setStartSessionTime(startSessionTime);
+        communicationSession.setEndSessionTime(endSessionTime);
+        communicationSession.setDuration(duration);
+        return communicationSession;
     }
 
 }
