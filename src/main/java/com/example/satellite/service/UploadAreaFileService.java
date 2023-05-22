@@ -56,8 +56,6 @@ public class UploadAreaFileService {
         String areaName = baseFileName.replaceAll(AREA_NAME_PREFIX, "");
         List<String> allRows = new BufferedReader(new InputStreamReader(file.getInputStream())).lines().toList();
         Map<String, List<CommunicationSession>> sessionMap = parseFile(allRows);
-
-        List<SatelliteFacilitySession> list1 = greedyFacilityScheduleService.makeFacilitySchedule("Magadan2");
         Area area = areaRepository.findFirstByName(areaName).orElse(new Area(areaName));
         areaRepository.save(area);
         sessionMap.forEach((key, value) -> {
