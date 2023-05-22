@@ -52,4 +52,8 @@ public class SatelliteFacilitySession {
         this.endSessionTime = session.getEndSessionTime();
         this.duration = session.getDuration();
     }
+
+    public SatelliteFacilitySession() {
+
+    }
 }
