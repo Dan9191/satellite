@@ -11,6 +11,5 @@ import java.util.List;
 @Repository
 public interface SatelliteFacilitySessionRepository extends JpaRepository<SatelliteFacilitySession, Integer>, SatelliteFacilitySessionJdbcRepository {
 
-    public List<SatelliteFacilitySession> findByFacilityAndSatellite(Facility facility,
-                                                                     Satellite satellite);
+    List<SatelliteFacilitySession> findByFacility(Facility facility);
 }
