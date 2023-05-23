@@ -1,11 +1,12 @@
 package com.example.satellite.service;
 
+import com.example.satellite.config.SatelliteProperties;
 import com.example.satellite.entity.Facility;
 import com.example.satellite.entity.SatelliteFacilitySession;
 import com.example.satellite.repository.FacilityRepository;
 import com.example.satellite.repository.SatelliteFacilitySessionRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,34 +17,29 @@ import java.util.List;
 
 @Service
 @Slf4j
-
+@RequiredArgsConstructor
 public class GreedyFacilityScheduleService {
 
     private final FacilityRepository facilityRepository;
 
     private final SatelliteFacilitySessionRepository satelliteFacilitySessionRepository;
 
-    private List<SatelliteFacilitySession> allSessionsList;
-
-    @Autowired
-    public GreedyFacilityScheduleService(FacilityRepository facilityRepository,
-                                         SatelliteFacilitySessionRepository satelliteFacilitySessionRepository) {
-        this.facilityRepository = facilityRepository;
-        this.satelliteFacilitySessionRepository = satelliteFacilitySessionRepository;
-    }
+    private List<SatelliteFacilitySession> allSessionsList= new ArrayList<>();
 
     public List<SatelliteFacilitySession> makeFacilitySchedule(String facilityName){
-        Facility facility = facilityRepository.findFirstByName(facilityName)
-                .orElseThrow();
-        allSessionsList = new ArrayList<>();
-            allSessionsList = satelliteFacilitySessionRepository.findByFacility(facility)
-                    .stream()
-                    .sorted(Comparator.comparing(SatelliteFacilitySession::getStartSessionTime))
-                    .toList();
+        Facility facility = facilityRepository.findByName(facilityName)
+                .orElseThrow(() -> {
+                    log.error("Facility '{}' not found", facilityName);
+                    throw new RuntimeException(String.format("Наземное устройство '%s' не найдено", facilityName));
+                });
 
-        SatelliteFacilitySession firstSession = allSessionsList.stream()
-                .min(Comparator.comparing(SatelliteFacilitySession::getStartSessionTime))
-                .orElseThrow();
+        allSessionsList = satelliteFacilitySessionRepository.findByFacilityOrderByStartSessionTime(facility);
+        if (allSessionsList.isEmpty()) {
+            log.error("Facility '{}' not found", facilityName);
+            throw new RuntimeException(String.format("У наземного устройство '%s' отсутствуют принимаемые спутники",
+                    facilityName));
+        }
+        SatelliteFacilitySession firstSession = allSessionsList.get(0);
 
         List<SatelliteFacilitySession> facilitySchedule = new ArrayList<>();
         while (!allSessionsList.isEmpty()){
@@ -57,7 +53,8 @@ public class GreedyFacilityScheduleService {
         LocalDateTime previousSession = session.getEndSessionTime();
         if (allSessionsList.get(allSessionsList.size()-1).getStartSessionTime().isBefore(previousSession)){
             allSessionsList = new ArrayList<>();
-            return new SatelliteFacilitySession();}
+            return new SatelliteFacilitySession();
+        }
         SatelliteFacilitySession nextSession = allSessionsList.stream()
                 .filter(sfs -> sfs.getStartSessionTime().isAfter(previousSession))
                 .min(Comparator.comparing(SatelliteFacilitySession::getStartSessionTime))

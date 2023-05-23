@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 @NoArgsConstructor
-@Table(name="uploadedfiles")
+@Table(name="uploaded_files")
 public class UploadedFile {
 
     @Id
