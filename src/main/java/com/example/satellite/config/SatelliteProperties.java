@@ -10,5 +10,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties("satellite")
 public class SatelliteProperties {
 
-    private String schemaName;
+    private String schemaName = "sat";
 }

@@ -35,7 +35,6 @@ public class FacilityUploadController {
     @PostMapping("/upload")
     public ResponseEntity fileUpload(@RequestParam("file") MultipartFile file) {
         String tableName = file.getOriginalFilename();
-
         System.out.println(tableName);
         try {
             uploadFileService.readFile(file);

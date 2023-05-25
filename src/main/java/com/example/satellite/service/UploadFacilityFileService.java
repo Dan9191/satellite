@@ -10,7 +10,6 @@ import com.example.satellite.utils.ValidateUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import org.apache.commons.io.FilenameUtils;
@@ -58,7 +57,6 @@ public class UploadFacilityFileService {
      * @param file Загружаемый файл.
      * @throws IOException
      */
-    @Transactional
     public void readFile(MultipartFile file) throws IOException {
         String baseFileName = FilenameUtils.getBaseName(file.getOriginalFilename());
         //проверка начилия файла в БД
