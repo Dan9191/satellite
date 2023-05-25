@@ -46,11 +46,9 @@ public class SchedulerCalculationService {
         log.info("End calculated facility schedule {} ms", stageTime - startTime);
 
         log.info("Start calculated area schedule");
-
-
+        Map<Satellite, List<SatelliteAreaSession>> SatelliteAreaSessionsMap = findAllSatelliteAreaSessionsMap();
         log.info("End calculated facility schedule {} ms", System.currentTimeMillis() - stageTime);
         log.info("End calculated end memory time {}", LocalDateTime.now());
-
     }
 
     /**
@@ -71,7 +69,7 @@ public class SchedulerCalculationService {
     }
 
     /**
-     * Собирает данные о всех сеансах связи спутника с землей.
+     * Собирает данные о всех сеансах связи спутника с землей. Вычисляет время переполнения памяти.
      *
      * @return Мапа сеансов съемки спутника, где key - спутник, value - сеансы съемки.
      */
