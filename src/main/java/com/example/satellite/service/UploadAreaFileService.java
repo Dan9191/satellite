@@ -28,6 +28,9 @@ import static com.example.satellite.utils.ConstantUtils.END_SATELLITE_PATTERN;
 import static com.example.satellite.utils.ConstantUtils.SATELLITE_NAME_PREFIX;
 import static com.example.satellite.utils.ConstantUtils.SESSION_MATCHES_SIGN;
 
+/**
+ * Сервис загрузки расписаний для группировки спутников, принадлежащих одной траектории.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -42,9 +45,6 @@ public class UploadAreaFileService {
     private final SatelliteAreaSessionRepository satelliteAreaSessionRepository;
 
     private final UploadedFilesRepository uploadedFilesRepository;
-
-    private final GreedyFacilityScheduleService greedyFacilityScheduleService;
-
 
     @Transactional
     public void readFile(MultipartFile file) throws IOException {

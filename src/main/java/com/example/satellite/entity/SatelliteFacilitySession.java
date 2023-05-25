@@ -10,11 +10,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
 @Entity
+@NoArgsConstructor
 @Table(name = "satellite_facility_session")
 public class SatelliteFacilitySession {
 
@@ -53,7 +55,4 @@ public class SatelliteFacilitySession {
         this.duration = session.getDuration();
     }
 
-    public SatelliteFacilitySession() {
-
-    }
 }
