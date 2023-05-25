@@ -1,5 +1,6 @@
 package com.example.satellite.utils;
 
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -19,6 +20,10 @@ public class ConstantUtils {
     public static String ZORKIY = "Zorkiy";
 
     public static String TO = "-To-";
+
+    public static LocalTime START_SHOOTING_SESSION = LocalTime.parse("09:00:00");
+
+    public static LocalTime END_SHOOTING_SESSION = LocalTime.parse("18:00:00");
 
     /**
      * Маска для разложения дат.

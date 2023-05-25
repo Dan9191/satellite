@@ -15,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import org.apache.commons.io.FilenameUtils;
 
-import java.beans.Transient;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -34,6 +33,9 @@ import static com.example.satellite.utils.ConstantUtils.SATELLITE_NAME_PREFIX;
 import static com.example.satellite.utils.ConstantUtils.SESSION_MATCHES_SIGN;
 import static com.example.satellite.utils.ConstantUtils.TO;
 
+/**
+ * Сервис загрузки расписания для приемников.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
