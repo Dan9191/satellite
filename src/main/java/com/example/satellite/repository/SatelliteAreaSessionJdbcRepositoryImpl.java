@@ -40,6 +40,9 @@ public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSess
             "or (start_session_time >= ? and start_session_time <= ? and end_session_time >= ?) " +
             "or (start_session_time <= ? and end_session_time >= ? and end_session_time <= ?)";
 
+    private static final String FIND_NEXT_BY_TIME_SESSION = "select * from %s.satellite_area_session " +
+            "where start_session_time > ? limit 1";
+
 
     /**
      * Пакетное сохранение сеансов связи.
@@ -81,8 +84,8 @@ public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSess
     @Override
     public Integer findByTimeOverlap(Satellite satellite, LocalDateTime start, LocalDateTime stop) {
         Integer areaSessionId = 0;
-        if (satellite == null)
-            return 0;
+//        if (satellite == null)
+//            return 0;
         try (Connection connection = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
             PreparedStatement ps = connection.prepareStatement(String.format(FIND_BY_TIME_OVERLAP_SESSION, properties.getSchemaName()));
 
@@ -97,7 +100,7 @@ public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSess
             ps.setObject(9, stop);
 
             ResultSet resultSet = ps.executeQuery();
-            while(resultSet.next()){
+            while (resultSet.next()){
                 areaSessionId = resultSet.getInt("Id");
             }
         } catch (SQLException ex){
@@ -106,5 +109,24 @@ public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSess
         }
 
         return areaSessionId;
+    }
+
+    @Override
+    public Integer findNextByTime(SatelliteAreaSession areaSession) {
+        Integer nextAreaSessionId = 0;
+        try (Connection connection = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
+            PreparedStatement ps = connection.prepareStatement(String.format(FIND_NEXT_BY_TIME_SESSION, properties.getSchemaName()));
+
+            ps.setObject(1, areaSession.getEndSessionTime());
+
+            ResultSet resultSet = ps.executeQuery();
+            while(resultSet.next()){
+                nextAreaSessionId = resultSet.getInt("Id");
+            }
+        } catch (SQLException ex){
+            log.error("Find next by date query session failed.", ex);
+            throw new RuntimeException("Find next by date query session failed.", ex);
+        }
+        return nextAreaSessionId;
     }
 }

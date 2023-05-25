@@ -16,17 +16,15 @@ import java.util.List;
 @Slf4j
 public class FacilityScheduleSavingService {
 
-    private final GreedyFacilityScheduleService scheduleService;
+    private final SatelliteMemoryObservanceService memoryObservanceService;
     private long accessCounter = 0;
 
-    public void saveSchedule(String facility, File file){
-        List<SatelliteFacilitySession> schedule =
-                scheduleService.makeFacilitySchedule(facility);
+    public void saveSchedule(List<SatelliteFacilitySession>facilitySessions, File file){
        try {
            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-           writer.write(getHeader(facility));
+           writer.write(getHeader(facilitySessions.get(0).getFacility().getName()));
            //needs data transferred per session information
-           schedule.stream()
+           facilitySessions.stream()
                    .filter(sfs -> sfs.getSatellite()!=null)
                    .forEach(sfs -> {
                try {
@@ -52,7 +50,7 @@ public class FacilityScheduleSavingService {
     private String getContent(SatelliteFacilitySession session){
         return "\t\t" + session.getStartSessionTime() + "\t" +
                 session.getEndSessionTime() + "\t" + session.getDuration() +
-                "\t\t" + session.getSatellite().getName() + "\n";
+                "\t\t" + session.getSatellite().getName() + "\t\t" +
+                memoryObservanceService.getTransferredDataVolume(session) +"\n";
     }
-
 }

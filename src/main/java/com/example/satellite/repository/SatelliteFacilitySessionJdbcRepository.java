@@ -13,4 +13,6 @@ public interface SatelliteFacilitySessionJdbcRepository {
      */
     void saveBatch(List<SatelliteFacilitySession> sessionList);
 
+    Integer findPreviousByDate(SatelliteFacilitySession facilitySession);
+
 }

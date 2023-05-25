@@ -37,6 +37,9 @@ public class SatelliteFacilitySessionJdbcRepositoryImpl implements SatelliteFaci
             + "satellite_id, facility_id, order_number, start_session_time, end_session_time, duration"
             + ") values (?, ?, ?, ?, ?, ?) returning id";
 
+    private static final String FIND_PREVIOUS_BY_DATE_SESSION = "select * from %s.satellite_facility_session " +
+            "where end_session_time < ? limit 1";
+
 
     /**
      * Пакетное сохранение сеансов связи.
@@ -73,6 +76,25 @@ public class SatelliteFacilitySessionJdbcRepositoryImpl implements SatelliteFaci
             log.error("CommunicationSession saving error", e);
             throw new RuntimeException("CommunicationSession saving error", e);
         }
+    }
+
+    @Override
+    public Integer findPreviousByDate(SatelliteFacilitySession facilitySession) {
+        Integer nextAreaSessionId = 0;
+        try (Connection connection = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
+            PreparedStatement ps = connection.prepareStatement(String.format(FIND_PREVIOUS_BY_DATE_SESSION, properties.getSchemaName()));
+
+            ps.setObject(1, facilitySession.getStartSessionTime());
+
+            ResultSet resultSet = ps.executeQuery();
+            while(resultSet.next()){
+                nextAreaSessionId = resultSet.getInt("Id");
+            }
+        } catch (SQLException ex){
+            log.error("Find next by date query session failed.", ex);
+            throw new RuntimeException("Find next by date query session failed.", ex);
+        }
+        return nextAreaSessionId;
     }
 
 }

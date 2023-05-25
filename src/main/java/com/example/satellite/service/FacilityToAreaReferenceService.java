@@ -21,22 +21,21 @@ public class FacilityToAreaReferenceService {
 
     private final GreedyFacilityScheduleService scheduleService;
 
-    public List<SatelliteFacilitySession> referFacilitySessionToAreaSession(String facilityName) {
+    private final SatelliteMemoryObservanceService memoryObservanceService;
 
-        List<SatelliteFacilitySession> facilitySessionsSchedule = scheduleService.makeFacilitySchedule(facilityName);
-        facilitySessionsSchedule
+    public void referFacilitySessionToAreaSession(List<SatelliteFacilitySession> facilitySessionSchedule) {
+
+        facilitySessionSchedule.parallelStream()
                 .forEach(sfs -> {
                     Satellite sessionSatellite = sfs.getSatellite();
                     Integer areaSessionId = areaSessionRepository.findByTimeOverlap(sessionSatellite, sfs.getStartSessionTime(), sfs.getEndSessionTime());
                     if (areaSessionId == 0) {
-                        System.out.println("No satellite area session referring to facility session " + sfs.getFacility().getName());
+                        System.out.printf("No satellite area session referring to facility %s session %d.\n", facilitySessionSchedule, sfs.getId());
                     } else {
-                    SatelliteAreaSession areaSession = areaSessionRepository.findById(areaSessionId).orElseThrow();
-                    sfs.setAreaSession(areaSession);
-                    facilitySessionRepository.save(sfs);}
-                        }
+                        SatelliteAreaSession areaSession = areaSessionRepository.findById(areaSessionId).orElseThrow();
+                        sfs.setAreaSession(areaSession);
+                        facilitySessionRepository.save(sfs);}
+                    }
                 );
-            return scheduleService.makeFacilitySchedule(facilityName);
-
     }
 }

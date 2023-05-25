@@ -1,8 +1,7 @@
 package com.example.satellite;
 
-import com.example.satellite.entity.SatelliteAreaSession;
 import com.example.satellite.entity.SatelliteFacilitySession;
-import com.example.satellite.repository.SatelliteFacilitySessionRepository;
+import com.example.satellite.repository.SatelliteAreaSessionJdbcRepositoryImpl;
 import com.example.satellite.service.FacilityScheduleSavingService;
 import com.example.satellite.service.FacilityToAreaReferenceService;
 import com.example.satellite.service.GreedyFacilityScheduleService;
@@ -13,7 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.ApplicationContext;
 
-import java.io.File;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @SpringBootApplication
@@ -29,13 +28,38 @@ public class SatelliteApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(SatelliteApplication.class, args);
 
-		//testing GreedyFacilityScheduleService
-//		GreedyFacilityScheduleService scheduleService =
-//				context.getBean(GreedyFacilityScheduleService.class);
-//		List <SatelliteFacilitySession> facilitySchedule =
-//				scheduleService.makeFacilitySchedule("Anadyr1");
-//		System.out.println(facilitySchedule.size());
-//		System.out.println(facilitySchedule.get(facilitySchedule.size()-1));
+
+		FacilityToAreaReferenceService referenceService =
+				context.getBean(FacilityToAreaReferenceService.class);
+		SatelliteMemoryObservanceService memoryService =
+				context.getBean(SatelliteMemoryObservanceService.class);
+		FacilityScheduleSavingService savingService =
+				context.getBean(FacilityScheduleSavingService.class);
+		GreedyFacilityScheduleService scheduleService =
+				context.getBean(GreedyFacilityScheduleService.class);
+		SatelliteAreaSessionJdbcRepositoryImpl satelliteAreaSessionJdbcRepository =
+				context.getBean(SatelliteAreaSessionJdbcRepositoryImpl.class);
+
+		List <SatelliteFacilitySession> novosibSchedule = scheduleService.makeFacilitySchedule("Novosib");
+		System.out.println("Schedule made. " + LocalDateTime.now());
+		referenceService.referFacilitySessionToAreaSession(novosibSchedule);
+		System.out.println("Referenced. " + LocalDateTime.now());
+		novosibSchedule.forEach(sfs -> memoryService.makeShootingSessions(sfs.getSatellite()));
+		System.out.println("Shooting sessions made." + LocalDateTime.now());
+
+//		memoryService.makeTransferSessions(novosibSchedule);
+//		System.out.println("Transferring sessions made.");
+//		File scheduleFile = new File("/Users/juliavolkova/Desktop/test.txt");
+//		savingService.saveSchedule(novosibSchedule, scheduleFile);
+
+
+		//memoryService.makeTransferSessions(anadyr2Schedule);
+//		File scheduleFile = new File("/Users/juliavolkova/Desktop/test.txt");
+//		savingService.saveSchedule(anadyr2Schedule, scheduleFile);
+
+
+
+
 
 		//testing FacilityScheduleSavingService
 //		FacilityScheduleSavingService savingService =
@@ -51,10 +75,10 @@ public class SatelliteApplication {
 //		areaSessions.forEach(System.out::println);
 
 		//testing FacilityToAreaReferenceService
-		FacilityToAreaReferenceService referenceService =
-				context.getBean(FacilityToAreaReferenceService.class);
-		referenceService.referFacilitySessionToAreaSession("Anadyr1")
-				.forEach(System.out::println);
+//		FacilityToAreaReferenceService referenceService =
+//				context.getBean(FacilityToAreaReferenceService.class);
+//		referenceService.referFacilitySessionToAreaSession("Anadyr1")
+//				.forEach(System.out::println);
 
 	}
 

@@ -18,4 +18,6 @@ public interface SatelliteAreaSessionJdbcRepository {
     Integer findByTimeOverlap(Satellite satellite, LocalDateTime start,
                                                      LocalDateTime stop);
 
+    Integer findNextByTime(SatelliteAreaSession areaSession);
+
 }
