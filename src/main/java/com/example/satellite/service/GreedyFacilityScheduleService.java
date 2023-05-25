@@ -1,6 +1,5 @@
 package com.example.satellite.service;
 
-import com.example.satellite.config.SatelliteProperties;
 import com.example.satellite.entity.Facility;
 import com.example.satellite.entity.SatelliteFacilitySession;
 import com.example.satellite.repository.FacilityRepository;
