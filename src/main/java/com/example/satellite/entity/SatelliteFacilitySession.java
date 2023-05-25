@@ -1,14 +1,7 @@
 package com.example.satellite.entity;
 
 import com.example.satellite.models.CommunicationSession;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -43,6 +36,10 @@ public class SatelliteFacilitySession {
 
     @Column(name = "duration")
     private float duration;
+
+    @OneToOne
+    @PrimaryKeyJoinColumn
+    private SatelliteAreaSession areaSession;
 
     public SatelliteFacilitySession(Satellite satellite, Facility facility, CommunicationSession session) {
         this.satellite = satellite;

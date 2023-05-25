@@ -1,18 +1,15 @@
 package com.example.satellite.repository;
 
 import com.example.satellite.config.SatelliteProperties;
+import com.example.satellite.entity.Satellite;
 import com.example.satellite.entity.SatelliteAreaSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
+import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -36,6 +33,12 @@ public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSess
     private static final String INSERT_SESSION = "insert into %s.satellite_area_session("
             + "satellite_id, area_id, order_number, start_session_time, end_session_time, duration"
             + ") values (?, ?, ?, ?, ?, ?) returning id";
+
+    private static final String FIND_BY_TIME_OVERLAP_SESSION = "select * from %s.satellite_area_session " +
+            "where satellite_id = ? " +
+            "and (start_session_time <= ? and end_session_time >= ?) " +
+            "or (start_session_time >= ? and start_session_time <= ? and end_session_time >= ?) " +
+            "or (start_session_time <= ? and end_session_time >= ? and end_session_time <= ?)";
 
 
     /**
@@ -73,5 +76,35 @@ public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSess
             log.error("CommunicationSession saving error", e);
             throw new RuntimeException("CommunicationSession saving error", e);
         }
+    }
+
+    @Override
+    public Integer findByTimeOverlap(Satellite satellite, LocalDateTime start, LocalDateTime stop) {
+        Integer areaSessionId = 0;
+        if (satellite == null)
+            return 0;
+        try (Connection connection = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
+            PreparedStatement ps = connection.prepareStatement(String.format(FIND_BY_TIME_OVERLAP_SESSION, properties.getSchemaName()));
+
+            ps.setObject(1, satellite.getId());
+            ps.setObject(2, start);
+            ps.setObject(3, stop);
+            ps.setObject(4, start);
+            ps.setObject(5, stop);
+            ps.setObject(6, stop);
+            ps.setObject(7, start);
+            ps.setObject(8, start);
+            ps.setObject(9, stop);
+
+            ResultSet resultSet = ps.executeQuery();
+            while(resultSet.next()){
+                areaSessionId = resultSet.getInt("Id");
+            }
+        } catch (SQLException ex){
+            log.error("Find by time overlap query session failed.", ex);
+            throw new RuntimeException("Find by time overlap query session failed.", ex);
+        }
+
+        return areaSessionId;
     }
 }

@@ -34,6 +34,7 @@ public class GreedyFacilityScheduleService {
                 });
 
         allSessionsList = satelliteFacilitySessionRepository.findByFacilityOrderByStartSessionTime(facility);
+
         if (allSessionsList.isEmpty()) {
             log.error("Facility '{}' not found", facilityName);
             throw new RuntimeException(String.format("У наземного устройство '%s' отсутствуют принимаемые спутники",
@@ -43,7 +44,10 @@ public class GreedyFacilityScheduleService {
 
         List<SatelliteFacilitySession> facilitySchedule = new ArrayList<>();
         while (!allSessionsList.isEmpty()){
-            facilitySchedule.add(getNext(firstSession));
+            SatelliteFacilitySession nextSession = getNext(firstSession);
+            if (nextSession.getId() == null)
+                break;
+            facilitySchedule.add(nextSession);
             firstSession = facilitySchedule.get(facilitySchedule.size() -1);
         }
         return facilitySchedule;

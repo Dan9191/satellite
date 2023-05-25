@@ -52,4 +52,14 @@ public class SatelliteAreaSession {
         this.endSessionTime = sessionData.getEndSessionTime();
         this.duration = sessionData.getDuration();
     }
+
+    @Column(name = "init_mem_status")
+    private Long initialMemoryState;
+
+    @Column(name = "fin_mem_status")
+    private Long finalMemoryState;
+
+    public SatelliteAreaSession() {
+
+    }
 }
