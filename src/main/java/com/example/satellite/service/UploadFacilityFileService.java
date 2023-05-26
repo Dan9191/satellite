@@ -40,8 +40,14 @@ import static com.example.satellite.utils.ConstantUtils.TO;
 @RequiredArgsConstructor
 public class UploadFacilityFileService {
 
+    /**
+     * Репозиторий для работы с приемником.
+     */
     private final FacilityRepository facilityRepository;
 
+    /**
+     * Репозиторий для работы со спутником.
+     */
     private final SatelliteRepository satelliteRepository;
 
     private final SatelliteTypeRepository satelliteTypeRepository;

@@ -6,12 +6,14 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Data@AllArgsConstructor
+@Data
+@AllArgsConstructor
 @NoArgsConstructor
-
-public class CommunicationSession {
+public class CalculatedCommunicationSession {
 
     private Integer number;
+
+
 
     private LocalDateTime startSessionTime;
 

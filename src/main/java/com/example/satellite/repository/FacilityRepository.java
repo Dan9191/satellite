@@ -6,6 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * Репозиторий для работы с приемником.
+ */
 @Repository
 public interface FacilityRepository extends JpaRepository<Facility, Integer> {
 

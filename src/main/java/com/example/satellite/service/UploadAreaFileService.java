@@ -37,10 +37,16 @@ public class UploadAreaFileService {
 
     private final AreaRepository areaRepository;
 
+    /**
+     * Репозиторий для работы со спутником.
+     */
     private final SatelliteRepository satelliteRepository;
 
     private final SatelliteTypeRepository satelliteTypeRepository;
 
+    /**
+     * Репозиторий для работы с сеансами съемки спутника.
+     */
     private final SatelliteAreaSessionRepository satelliteAreaSessionRepository;
 
     private final UploadedFilesRepository uploadedFilesRepository;
