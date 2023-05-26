@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Репозиторий для работы с сеансами съемки спутника.
+ */
 @Repository
 public interface SatelliteAreaSessionRepository extends JpaRepository<SatelliteAreaSession, Integer>, SatelliteAreaSessionJdbcRepository {
 

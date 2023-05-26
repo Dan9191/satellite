@@ -11,6 +11,9 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Спутник.
+ */
 @Data
 @Entity
 @NoArgsConstructor
