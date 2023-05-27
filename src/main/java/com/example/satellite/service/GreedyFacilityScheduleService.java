@@ -1,6 +1,5 @@
 package com.example.satellite.service;
 
-import com.example.satellite.config.SatelliteProperties;
 import com.example.satellite.entity.Facility;
 import com.example.satellite.entity.SatelliteFacilitySession;
 import com.example.satellite.repository.FacilityRepository;
@@ -20,6 +19,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GreedyFacilityScheduleService {
 
+    /**
+     * Репозиторий для работы с приемником.
+     */
     private final FacilityRepository facilityRepository;
 
     private final SatelliteFacilitySessionRepository satelliteFacilitySessionRepository;
