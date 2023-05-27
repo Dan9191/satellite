@@ -8,7 +8,7 @@ import com.example.satellite.repository.SatelliteFacilitySessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 
 
 @Service
@@ -19,23 +19,30 @@ public class FacilityToAreaReferenceService {
 
     private final SatelliteAreaSessionRepository areaSessionRepository;
 
-    private final GreedyFacilityScheduleService scheduleService;
 
-    private final SatelliteMemoryObservanceService memoryObservanceService;
+    public void referFacilitySessionToAreaSession(List<SatelliteFacilitySession> facilitySessions) {
 
-    public void referFacilitySessionToAreaSession(List<SatelliteFacilitySession> facilitySessionSchedule) {
-
-        facilitySessionSchedule.parallelStream()
+        List<SatelliteAreaSession> areaSessions = new ArrayList<>();
+        String facilityName = facilitySessions.get(0).getFacility().getName();
+        facilitySessions.parallelStream()
                 .forEach(sfs -> {
-                    Satellite sessionSatellite = sfs.getSatellite();
-                    Integer areaSessionId = areaSessionRepository.findByTimeOverlap(sessionSatellite, sfs.getStartSessionTime(), sfs.getEndSessionTime());
-                    if (areaSessionId == 0) {
-                        System.out.printf("No satellite area session referring to facility %s session %d.\n", facilitySessionSchedule, sfs.getId());
-                    } else {
-                        SatelliteAreaSession areaSession = areaSessionRepository.findById(areaSessionId).orElseThrow();
-                        sfs.setAreaSession(areaSession);
-                        facilitySessionRepository.save(sfs);}
-                    }
+                            Satellite sessionSatellite = sfs.getSatellite();
+                            Integer areaSessionId = areaSessionRepository.findByTimeOverlap(sessionSatellite,
+                                    sfs.getStartSessionTime(), sfs.getEndSessionTime());
+                            if (areaSessionId == null) {
+                                System.out.printf("No satellite area session referring to facility %s session %d.\n", facilityName, sfs.getId());
+                            } else {
+                                Optional <SatelliteAreaSession> foundAreaSession = areaSessionRepository.findById(areaSessionId);
+                                if(foundAreaSession.isPresent()) {
+                                    SatelliteAreaSession areaSession = foundAreaSession.get();
+                                    sfs.setAreaSession(areaSession);
+                                    areaSession.setFacilitySession(sfs);
+                                    areaSessions.add(areaSession);
+                                }
+                            }
+                        }
                 );
+        facilitySessionRepository.saveBatch(facilitySessions);
+        areaSessionRepository.saveBatch(areaSessions);
     }
 }

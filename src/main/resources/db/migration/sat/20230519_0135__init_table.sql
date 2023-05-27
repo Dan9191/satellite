@@ -68,7 +68,11 @@ create table satellite_facility_session
     order_number       int4   not null,
     start_session_time timestamp(2),
     end_session_time   timestamp(2),
-    duration           float
+    duration           float,
+    satellite_area_session int4 references satellite_area_session (id),
+    init_mem_status     bigint default 0,
+    fin_mem_status      bigint default 0,
+    transferred         boolean default false
 );
 
 comment on table satellite_facility_session is 'Таблица сеансов передачи данных Приемник-Спутник';
@@ -79,6 +83,10 @@ comment on column satellite_facility_session.order_number is 'Порядковы
 comment on column satellite_facility_session.start_session_time is 'Начало сеанса передачи данных';
 comment on column satellite_facility_session.end_session_time is 'Конец сеанса передачи данных';
 comment on column satellite_facility_session.duration is 'Продолжительность сеанса передачи данных';
+comment on column satellite_facility_session.satellite_area_session is 'Соответствующий по времени сессия пролета над территорией РФ';
+comment on column satellite_facility_session.init_mem_status is 'Начальное состояние ЗУ спутника';
+comment on column satellite_facility_session.fin_mem_status is 'Конечное состояние ЗУ спутника';
+comment on column satellite_facility_session.transferred is 'Факт совершения сброса данных.';
 
 -- Таблица пролета спутника над территорией РФ
 create table satellite_area_session
@@ -89,7 +97,11 @@ create table satellite_area_session
     order_number       int4   not null,
     start_session_time timestamp(2),
     end_session_time   timestamp(2),
-    duration           float
+    duration           float,
+    satellite_facility_session int4 references satellite_facility_session (id),
+    init_mem_status     bigint default 0,
+    fin_mem_status      bigint default 0,
+    shot         boolean default false
 );
 
 comment on table satellite_area_session is 'Таблица пролета спутника над территорией РФ';
@@ -100,3 +112,7 @@ comment on column satellite_area_session.order_number is 'Порядковый �
 comment on column satellite_area_session.start_session_time is 'Начало сеанса вхождения на территорию РФ';
 comment on column satellite_area_session.end_session_time is 'Конец сеанса вхождения на территорию РФ';
 comment on column satellite_area_session.duration is 'Продолжительность сеанса вхождения на территорию РФ';
+comment on column satellite_area_session.satellite_facility_session is 'Соответствующий по времени сессия связи с наземной станцией';
+comment on column satellite_area_session.init_mem_status is 'Начальное состояние ЗУ спутника';
+comment on column satellite_area_session.fin_mem_status is 'Конечное состояние ЗУ спутника';
+comment on column satellite_area_session.shot is 'Факт совершения съемки.';

@@ -41,7 +41,12 @@ public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSess
             "or (start_session_time <= ? and end_session_time >= ? and end_session_time <= ?)";
 
     private static final String FIND_NEXT_BY_TIME_SESSION = "select * from %s.satellite_area_session " +
-            "where start_session_time > ? limit 1";
+            "where satellite_id = ? and start_session_time > ? limit 1";
+
+    private static final String FIND_NEXT_BY_TIME_AND_FACILITY_SESSION =
+            "select * from %s.satellite_area_session where satellite_id = ? " +
+                    "and satellite_facility_session != null and start_session_time > " +
+                    "? limit 1";
 
 
     /**
@@ -83,45 +88,69 @@ public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSess
 
     @Override
     public Integer findByTimeOverlap(Satellite satellite, LocalDateTime start, LocalDateTime stop) {
-        Integer areaSessionId = 0;
-//        if (satellite == null)
-//            return 0;
+
+        Integer areaId = null;
+
         try (Connection connection = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
             PreparedStatement ps = connection.prepareStatement(String.format(FIND_BY_TIME_OVERLAP_SESSION, properties.getSchemaName()));
 
-            ps.setObject(1, satellite.getId());
-            ps.setObject(2, start);
-            ps.setObject(3, stop);
-            ps.setObject(4, start);
-            ps.setObject(5, stop);
-            ps.setObject(6, stop);
-            ps.setObject(7, start);
-            ps.setObject(8, start);
-            ps.setObject(9, stop);
+            ps.setInt(1, satellite.getId());
+            ps.setTimestamp(2, Timestamp.valueOf(start));
+            ps.setTimestamp(3, Timestamp.valueOf(stop));
+            ps.setTimestamp(4, Timestamp.valueOf(start));
+            ps.setTimestamp(5, Timestamp.valueOf(stop));
+            ps.setTimestamp(6, Timestamp.valueOf(stop));
+            ps.setTimestamp(7, Timestamp.valueOf(start));
+            ps.setTimestamp(8, Timestamp.valueOf(start));
+            ps.setTimestamp(9, Timestamp.valueOf(stop));
 
             ResultSet resultSet = ps.executeQuery();
-            while (resultSet.next()){
-                areaSessionId = resultSet.getInt("Id");
+            while (resultSet.next()) {
+                areaId = resultSet.getInt("id");
             }
-        } catch (SQLException ex){
+
+        } catch (SQLException ex) {
             log.error("Find by time overlap query session failed.", ex);
             throw new RuntimeException("Find by time overlap query session failed.", ex);
         }
 
-        return areaSessionId;
+        return areaId;
     }
 
     @Override
-    public Integer findNextByTime(SatelliteAreaSession areaSession) {
+    public Integer findNextByTime(Satellite satellite, LocalDateTime endSessionTime) {
+
         Integer nextAreaSessionId = 0;
         try (Connection connection = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
             PreparedStatement ps = connection.prepareStatement(String.format(FIND_NEXT_BY_TIME_SESSION, properties.getSchemaName()));
 
-            ps.setObject(1, areaSession.getEndSessionTime());
+            ps.setInt(1, satellite.getId());
+            ps.setTimestamp(2, Timestamp.valueOf(endSessionTime));
 
             ResultSet resultSet = ps.executeQuery();
             while(resultSet.next()){
-                nextAreaSessionId = resultSet.getInt("Id");
+                nextAreaSessionId = resultSet.getInt("id");
+            }
+        } catch (SQLException ex){
+            log.error("Find next by date query session failed.", ex);
+            throw new RuntimeException("Find next by date query session failed.", ex);
+        }
+        return nextAreaSessionId;
+    }
+
+    @Override
+    public Integer findNextByTimeAndFacilitySession(SatelliteAreaSession areaSession) {
+        Satellite satellite = areaSession.getSatellite();
+        int nextAreaSessionId = 0;
+        try (Connection connection = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
+            PreparedStatement ps = connection.prepareStatement(String.format(FIND_NEXT_BY_TIME_AND_FACILITY_SESSION, properties.getSchemaName()));
+
+            ps.setInt(1, satellite.getId());
+            ps.setTimestamp(2, Timestamp.valueOf(areaSession.getEndSessionTime()));
+
+            ResultSet resultSet = ps.executeQuery();
+            while(resultSet.next()){
+                nextAreaSessionId = resultSet.getInt("id");
             }
         } catch (SQLException ex){
             log.error("Find next by date query session failed.", ex);

@@ -16,7 +16,7 @@ import java.util.List;
 @Slf4j
 public class FacilityScheduleSavingService {
 
-    private final SatelliteMemoryObservanceService memoryObservanceService;
+    private final MemoryObservanceService memoryObservanceService;
     private long accessCounter = 0;
 
     public void saveSchedule(List<SatelliteFacilitySession>facilitySessions, File file){

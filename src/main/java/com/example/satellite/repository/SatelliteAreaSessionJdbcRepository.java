@@ -16,8 +16,9 @@ public interface SatelliteAreaSessionJdbcRepository {
     void saveBatch(List<SatelliteAreaSession> sessionList);
 
     Integer findByTimeOverlap(Satellite satellite, LocalDateTime start,
-                                                     LocalDateTime stop);
+                              LocalDateTime stop);
 
-    Integer findNextByTime(SatelliteAreaSession areaSession);
+    Integer findNextByTime(Satellite satellite, LocalDateTime endSessionTime);
 
+    Integer findNextByTimeAndFacilitySession (SatelliteAreaSession areaSession);
 }

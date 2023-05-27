@@ -38,8 +38,17 @@ public class SatelliteFacilitySession {
     private float duration;
 
     @OneToOne
-    @PrimaryKeyJoinColumn
+    @PrimaryKeyJoinColumn (name = "satellite_area_session")
     private SatelliteAreaSession areaSession;
+
+    @Column(name = "init_mem_status")
+    private Long initialMemoryState;
+
+    @Column(name = "fin_mem_status")
+    private Long finalMemoryState;
+
+    @Column(name = "transferred")
+    private boolean transferred;
 
     public SatelliteFacilitySession(Satellite satellite, Facility facility, CommunicationSession session) {
         this.satellite = satellite;
