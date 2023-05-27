@@ -1,5 +1,6 @@
 package com.example.satellite.repository;
 
+import com.example.satellite.entity.Area;
 import com.example.satellite.entity.Satellite;
 import com.example.satellite.entity.SatelliteAreaSession;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,5 +15,7 @@ import java.util.List;
 public interface SatelliteAreaSessionRepository extends JpaRepository<SatelliteAreaSession, Integer>, SatelliteAreaSessionJdbcRepository {
 
     List<SatelliteAreaSession> findAllBySatelliteOrderByStartSessionTime(Satellite satellite);
+
+    List<SatelliteAreaSession> findAllByAreaOrderByStartSessionTime(Area area);
 
 }
