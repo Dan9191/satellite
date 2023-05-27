@@ -55,4 +55,12 @@ public class SatelliteFacilitySession {
         this.duration = session.getDuration();
     }
 
+    @Override
+    public String toString() {
+        return
+                "         " + orderNumber +
+                "         " + startSessionTime +
+                "         " + endSessionTime +
+                "         " + duration;
+    }
 }

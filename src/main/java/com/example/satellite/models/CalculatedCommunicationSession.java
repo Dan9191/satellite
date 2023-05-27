@@ -101,4 +101,15 @@ public class CalculatedCommunicationSession {
         this.currentMemory = currentMemory;
     }
 
+    @Override
+    public String toString() {
+        return number +
+                "         " + owner.getName() +
+                "         " + secondObject + '\'' +
+                "         " + startSessionTime +
+                "         " + endSessionTime +
+                "         " + duration +
+                "         " + durationMemory +
+                "         " + currentMemory;
+    }
 }

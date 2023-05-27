@@ -54,4 +54,12 @@ public class SatelliteAreaSession {
         this.endSessionTime = sessionData.getEndSessionTime();
         this.duration = sessionData.getDuration();
     }
+
+    @Override
+    public String toString() {
+        return "         " + orderNumber
+                + "         " + startSessionTime
+                + "         " + endSessionTime
+                + "         " + duration;
+    }
 }

@@ -10,6 +10,9 @@ import com.example.satellite.repository.FacilityRepository;
 import com.example.satellite.repository.SatelliteAreaSessionRepository;
 import com.example.satellite.repository.SatelliteFacilitySessionRepository;
 import com.example.satellite.repository.SatelliteRepository;
+import com.example.satellite.service.unload.AlternativeCreateFileService;
+import com.example.satellite.service.unload.AreaFileService;
+import com.example.satellite.service.unload.FacilityFileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -54,6 +57,21 @@ public class SchedulerCalculationService {
     private final SatelliteFacilitySessionRepository satelliteFacilitySessionRepository;
 
     /**
+     * Сервис формирования расписания в альтернативной форме.
+     */
+    private final AlternativeCreateFileService alternativeCreateFileService;
+
+    /**
+     * Сервис для формирования файла выйгрузки расписания по траекториям.
+     */
+    private final AreaFileService areaFileService;
+
+    /**
+     * Сервис для формирования файла выйгрузки расписания по приемнику.
+     */
+    private final FacilityFileService facilityFileService;
+
+    /**
      * Список доступных сеансов связи спутника и приемника земли.
      */
     private Map<Facility, List<SatelliteFacilitySession>> freeFacilitySessionsMap = new HashMap<>();
@@ -63,10 +81,6 @@ public class SchedulerCalculationService {
      */
     private Map<Facility, Map<Satellite, List<SatelliteFacilitySession>>> actualFacilitySessionsMap = new HashMap<>();
 
-    /**
-     * Список сеансов съемки спутника, которые произойдут реально.
-     */
-    private Map<Area, Map<Satellite, List<SatelliteAreaSession>>> actualAreaSessionsMap = new HashMap<>();
 
     /**
      * Набросок метода для вычисления времени конца памяти у каждого из спутников.
@@ -81,12 +95,15 @@ public class SchedulerCalculationService {
         log.info("End calculated facility schedule {} ms", stageTime - startTime);
 
         log.info("Start calculated area schedule");
-        Map<Satellite, List<SatelliteAreaSession>> SatelliteAreaSessionsMap = findAllSatelliteAreaSessionsMap();
+        Map<Satellite, List<SatelliteAreaSession>> satelliteAreaSessionsMap = findAllSatelliteAreaSessionsMap();
         log.info("End calculated area schedule {} ms", System.currentTimeMillis() - stageTime);
         stageTime = System.currentTimeMillis();
         log.info("Start calculated full schedule");
-        memoryOverflowTime(SatelliteAreaSessionsMap);
+        memoryOverflowTime(satelliteAreaSessionsMap);
         log.info("End calculated memory Overflow Time {}", System.currentTimeMillis() - stageTime );
+
+        areaFileService.createFile(satelliteAreaSessionsMap);
+        facilityFileService.createFile(actualFacilitySessionsMap);
     }
 
     /**
@@ -131,6 +148,7 @@ public class SchedulerCalculationService {
      *  @param satelliteAreaSessionsMap Мапа сеансов съемки спутника, где key - спутник, value - сеансы съемки.
      */
     private void memoryOverflowTime(Map<Satellite, List<SatelliteAreaSession>> satelliteAreaSessionsMap) {
+        Map<Satellite, List<CalculatedCommunicationSession>> finishedScheduleMap = new HashMap<>();
         satelliteAreaSessionsMap.forEach((satellite, sessionsList) -> {
             //итоговое расписание сеансов спутника
             List<CalculatedCommunicationSession> actualSatelliteSessions = new ArrayList<>();
@@ -192,11 +210,13 @@ public class SchedulerCalculationService {
                     previousEndSession = session.getEndSessionTime();
                 }
             }
-                System.out.println(satellite.getName());
-                System.out.println(previousEndSession);
-                System.out.println("---------");
+//            System.out.println(satellite.getName());
+//            System.out.println(previousEndSession);
+//            System.out.println("---------");
 
+            finishedScheduleMap.put(satellite, actualSatelliteSessions);
         });
+        alternativeCreateFileService.createFile(finishedScheduleMap);
     }
 
     /**
