@@ -220,6 +220,7 @@ public class SchedulerCalculationService {
 
             finishedScheduleMap.put(satellite, actualSatelliteSessions);
         });
+        alternativeCreateFileService.report(stringBuilder.toString());
         alternativeCreateFileService.createFile(finishedScheduleMap);
     }
 
