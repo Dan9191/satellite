@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.example.satellite.utils.ConstantUtils.REPORT_DIR;
+
 /**
  * Сервис формирования расписания в альтернативной форме.
  */
@@ -70,6 +72,30 @@ public class AlternativeCreateFileService {
 //                FileUtils.deleteQuietly(scheduleFile);
 //            }
 
+    }
+
+    /**
+     * Генерирует миниотчет.
+     *
+     * @param report Информация.
+     */
+    public void report(String report) {
+
+        String fileName = String.format("%s.txt", REPORT_DIR);
+        File scheduleFile = new File(properties.getReportDirectory(), fileName);
+
+        try (FileOutputStream fileOutputStream = new FileOutputStream(scheduleFile);
+             Writer fos = new OutputStreamWriter(fileOutputStream, StandardCharsets.UTF_8)) {
+            try {
+                fos.append(report);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            fos.flush();
+        } catch (Exception e) {
+            FileUtils.deleteQuietly(scheduleFile);
+            log.error(e.getMessage());
+        }
     }
 
 }

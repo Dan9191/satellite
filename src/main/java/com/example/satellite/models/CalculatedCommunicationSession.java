@@ -104,8 +104,7 @@ public class CalculatedCommunicationSession {
     @Override
     public String toString() {
         return number +
-                "         " + owner.getName() +
-                "         " + secondObject + '\'' +
+                "         " + secondObject +
                 "         " + startSessionTime +
                 "         " + endSessionTime +
                 "         " + duration +

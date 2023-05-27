@@ -24,18 +24,13 @@ public class FacilityUploadController {
      */
     private final UploadFacilityFileService uploadFileService;
 
-    @GetMapping("/test")
-    public ResponseEntity test() {
-        return ResponseEntity.ok().body("asdaslld");
-    }
-
     /**
      * Метод для загрузки
      */
     @PostMapping("/upload")
     public ResponseEntity fileUpload(@RequestParam("file") MultipartFile file) {
         String tableName = file.getOriginalFilename();
-        System.out.println(tableName);
+
         try {
             uploadFileService.readFile(file);
         } catch (IOException e) {

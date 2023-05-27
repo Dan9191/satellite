@@ -32,4 +32,9 @@ public class SatelliteProperties {
      * Папка для сохранения расписаний работы приемников.
      */
     private File areaDirectory;
+
+    /**
+     * Папка для отчета.
+     */
+    private File reportDirectory;
 }

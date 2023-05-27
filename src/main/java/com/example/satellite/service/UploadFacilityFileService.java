@@ -58,15 +58,16 @@ public class UploadFacilityFileService {
 
 
     /**
-     * Извлечение содержимого файла и сохранение расписаний
+     * Извлечение содержимого файла и сохранение расписаний.
      *
      * @param file Загружаемый файл.
-     * @throws IOException
+     * @throws IOException Файл уже был прочитан.
      */
     public void readFile(MultipartFile file) throws IOException {
         String baseFileName = FilenameUtils.getBaseName(file.getOriginalFilename());
         //проверка начилия файла в БД
         if (uploadedFilesRepository.findByName(baseFileName).isPresent()) {
+            log.error("file '{}' has already been loaded into the database.", baseFileName);
             throw new IOException("Файл с таким именем уже загружен в базу данных.");
         }
         String facilityName = baseFileName.replaceAll(FACILITY_NAME_PREFIX, "");
@@ -86,7 +87,7 @@ public class UploadFacilityFileService {
                 } else if (!kinosatSign && zorkiySign) {
                     satellite.setSatelliteType(satelliteTypeRepository.getReferenceById(2));
                 } else {
-                    System.out.println("Satellite validate error");
+                    log.error("unknown satellite type '{}'", key);
                 }
                 satellite.setName(key);
                 satelliteRepository.save(satellite);
@@ -100,6 +101,7 @@ public class UploadFacilityFileService {
             satelliteFacilitySessionRepository.saveBatch(sessionList);
         });
         uploadedFilesRepository.save(new UploadedFile(baseFileName));
+        log.info("file '{}' successfully read", baseFileName);
     }
 
     /**

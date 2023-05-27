@@ -24,6 +24,11 @@ public class ConstantUtils {
 
     public static String TO = "-To-";
 
+    /**
+     * Название файла с мини-отчетом.
+     */
+    public static String REPORT_DIR = "report";
+
     public static LocalTime START_SHOOTING_SESSION = LocalTime.parse("09:00:00");
 
     public static LocalTime END_SHOOTING_SESSION = LocalTime.parse("18:00:00");

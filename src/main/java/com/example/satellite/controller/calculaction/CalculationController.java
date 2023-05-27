@@ -16,8 +16,8 @@ public class CalculationController {
 
     private final SchedulerCalculationService schedulerCalculationService;
 
-    @GetMapping("/faster-satellite")
-    public ResponseEntity test() {
+    @GetMapping("/calculate-schedule")
+    public ResponseEntity calculateSchedule() {
         schedulerCalculationService.findFasterSatellite();
         return ResponseEntity.ok().body("asdasd");
     }

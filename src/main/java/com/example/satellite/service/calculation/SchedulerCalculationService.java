@@ -149,6 +149,7 @@ public class SchedulerCalculationService {
      */
     private void memoryOverflowTime(Map<Satellite, List<SatelliteAreaSession>> satelliteAreaSessionsMap) {
         Map<Satellite, List<CalculatedCommunicationSession>> finishedScheduleMap = new HashMap<>();
+        StringBuilder stringBuilder = new StringBuilder();
         satelliteAreaSessionsMap.forEach((satellite, sessionsList) -> {
             //итоговое расписание сеансов спутника
             List<CalculatedCommunicationSession> actualSatelliteSessions = new ArrayList<>();
@@ -198,7 +199,7 @@ public class SchedulerCalculationService {
                 if (satelliteFacilitySession.isPresent()) {
                     SatelliteFacilitySession session = satelliteFacilitySession.get();
                     long sessionMemoryIncome = (-1) * (long) session.getDuration() * dataTransferSpeed;
-                    currentMemory.addAndGet(-sessionMemorySpending);
+                    currentMemory.addAndGet(sessionMemorySpending);
                     CalculatedCommunicationSession broadcastSession = new CalculatedCommunicationSession(
                             session,
                             orderNumber.get(),
@@ -210,9 +211,12 @@ public class SchedulerCalculationService {
                     previousEndSession = session.getEndSessionTime();
                 }
             }
-//            System.out.println(satellite.getName());
-//            System.out.println(previousEndSession);
-//            System.out.println("---------");
+
+            //копим информацию для миниотчета
+            stringBuilder.append(satellite.getName()).append("\n");
+            stringBuilder.append(previousEndSession).append("\n");
+            stringBuilder.append(currentMemory).append("\n");
+            stringBuilder.append("---------").append("\n");
 
             finishedScheduleMap.put(satellite, actualSatelliteSessions);
         });

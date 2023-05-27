@@ -51,10 +51,17 @@ public class UploadAreaFileService {
 
     private final UploadedFilesRepository uploadedFilesRepository;
 
+    /**
+     * Извлечение содержимого файла и сохранение расписаний.
+     *
+     * @param file Загружаемый файл.
+     * @throws IOException Файл уже был прочитан.
+     */
     public void readFile(MultipartFile file) throws IOException {
         String baseFileName = FilenameUtils.getBaseName(file.getOriginalFilename());
         //проверка начилия файла в БД
         if (uploadedFilesRepository.findByName(baseFileName).isPresent()) {
+            log.error("file '{}' has already been loaded into the database.", baseFileName);
             throw new IOException("Файл с таким именем уже загружен в базу данных.");
         }
         String areaName = baseFileName.replaceAll(AREA_NAME_PREFIX, "");
@@ -73,7 +80,7 @@ public class UploadAreaFileService {
                 } else if (!kinosatSign && zorkiySign) {
                     satellite.setSatelliteType(satelliteTypeRepository.getReferenceById(2));
                 } else {
-                    System.out.println("Satellite validate error");
+                    log.error("unknown satellite type '{}'", key);
                 }
                 satellite.setName(key);
                 satellite.setArea(area);
@@ -85,13 +92,13 @@ public class UploadAreaFileService {
                     satelliteRepository.save(satellite);
                 }
             }
-
             List<SatelliteAreaSession> sessionList = value.stream()
                     .map(sessionData -> new SatelliteAreaSession(satellite, area, sessionData))
                     .toList();
             satelliteAreaSessionRepository.saveBatch(sessionList);
         });
         uploadedFilesRepository.save(new UploadedFile(baseFileName));
+        log.info("file '{}' successfully read", baseFileName);
     }
 
 
@@ -104,7 +111,6 @@ public class UploadAreaFileService {
     private Map<String, List<CommunicationSession>> parseFile(List<String> allRows) {
         Map<String, List<CommunicationSession>> communicationMap = new HashMap<>();
         List<String> satelliteList = getSatelliteNames(allRows);
-        System.out.println("KinoSat_110101");
         satelliteList.forEach(name -> communicationMap.put(name, calculateSessionList(allRows, name)));
         return communicationMap;
     }
