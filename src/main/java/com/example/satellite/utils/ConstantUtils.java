@@ -2,6 +2,7 @@ package com.example.satellite.utils;
 
 import com.example.satellite.entity.SatelliteAreaSession;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -49,4 +50,11 @@ public class ConstantUtils {
     public static Predicate<SatelliteAreaSession> IS_SHOOTING_TIME = session ->
             session.getStartSessionTime().toLocalTime().isAfter(START_SHOOTING_SESSION)
             && session.getEndSessionTime().toLocalTime().isBefore(END_SHOOTING_SESSION);
+
+    /**
+     * Предикат вычисляет, относится ли время съемки к темному времени суток.
+     */
+    public static Predicate<LocalDateTime> IS_SENDING_TIME = time ->
+            (time.toLocalTime().isAfter(LocalTime.MIN) && time.toLocalTime().isBefore(START_SHOOTING_SESSION))
+            || (time.toLocalTime().isAfter(END_SHOOTING_SESSION) && time.toLocalTime().isBefore(LocalTime.MAX));
 }

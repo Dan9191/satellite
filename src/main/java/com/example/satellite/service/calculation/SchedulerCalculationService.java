@@ -12,8 +12,11 @@ import com.example.satellite.repository.SatelliteRepository;
 import com.example.satellite.service.unload.AlternativeCreateFileService;
 import com.example.satellite.service.unload.AreaFileService;
 import com.example.satellite.service.unload.FacilityFileService;
+import com.example.satellite.utils.HttpFileUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 
+import static com.example.satellite.utils.ConstantUtils.IS_SENDING_TIME;
 import static com.example.satellite.utils.ConstantUtils.IS_SHOOTING_TIME;
 
 @Service
@@ -102,6 +106,8 @@ public class SchedulerCalculationService {
 
         areaFileService.createFile(satelliteAreaSessionsMap);
         facilityFileService.createFile(actualFacilitySessionsMap);
+
+       // return HttpFileUtils.uploadFile(areaFileService.createFile(satelliteAreaSessionsMap), "Sessions_report");
     }
 
     /**
@@ -196,11 +202,25 @@ public class SchedulerCalculationService {
                 Optional<SatelliteFacilitySession> satelliteFacilitySession =
                         findSatelliteFacilitySession(satellite, startFreeInterval, endFreeInterval);
                 // если сессию передачи удалось найти - восстанавливаем объем текущей памяти
-//                if (satelliteFacilitySession.isPresent()) {
-//                    addUnloadingSession(satelliteFacilitySession.get(), dataTransferSpeed, currentMemory, sessionMemorySpending);
-//                }
-                // пока удается найти сессию выгрузки данных и память не освобождена - будем выгружать
-                while (satelliteFacilitySession.isPresent() && currentMemory.get() <= TOTAL_MEMORY) {
+                if (satelliteFacilitySession.isPresent()) {
+                    SatelliteFacilitySession session = satelliteFacilitySession.get();
+                    long sessionMemoryIncome = (-1) * (long) session.getDuration() * dataTransferSpeed;
+                    currentMemory.addAndGet(-sessionMemoryIncome);
+                    CalculatedCommunicationSession broadcastSession = new CalculatedCommunicationSession(
+                            session,
+                            orderNumber.get(),
+                            sessionMemoryIncome,
+                            currentMemory.get()
+                    );
+                    actualSatelliteSessions.add(broadcastSession);
+                    orderNumber.getAndIncrement();
+                    previousEndSession = session.getEndSessionTime();
+                    satelliteFacilitySession =
+                            findSatelliteFacilitySession(satellite, previousEndSession, endFreeInterval);
+                }
+                // если темное время суток,память не до конца свободна и пока удается найти сессию выгрузки данных-будем выгружать
+                while (satelliteFacilitySession.isPresent()
+                        && currentMemory.get() <= TOTAL_MEMORY && IS_SENDING_TIME.test(previousEndSession)) {
                     SatelliteFacilitySession session = satelliteFacilitySession.get();
                     long sessionMemoryIncome = (-1) * (long) session.getDuration() * dataTransferSpeed;
                     currentMemory.addAndGet(-sessionMemoryIncome);
