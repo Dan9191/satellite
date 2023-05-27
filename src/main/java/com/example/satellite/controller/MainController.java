@@ -18,7 +18,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 @Controller
-@RequestMapping("/v1/api")
+@RequestMapping("/v2/api")
 @RequiredArgsConstructor
 @Slf4j
 public class MainController {
@@ -40,9 +40,15 @@ public class MainController {
 
     private final SchedulerCalculationService schedulerCalculationService;
 
+    /**
+     * Запуск вычисления расписания.
+     */
     @GetMapping("/calculate-schedule")
-    public String calculateSchedule() {
+    public String calculateSchedule(Model model) {
+        long startTime = System.currentTimeMillis();
         schedulerCalculationService.findFasterSatellite();
+        String message = String.format("Успешно вычислено за %s секунд", (System.currentTimeMillis() - startTime)/1000);
+        model.addAttribute("message", message);
         return "upload";
     }
 
