@@ -1,6 +1,5 @@
 package com.example.satellite.service.calculation;
 
-import com.example.satellite.entity.Area;
 import com.example.satellite.entity.Facility;
 import com.example.satellite.entity.Satellite;
 import com.example.satellite.entity.SatelliteAreaSession;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Stream;
+
 
 import static com.example.satellite.utils.ConstantUtils.IS_SHOOTING_TIME;
 
@@ -157,6 +155,8 @@ public class SchedulerCalculationService {
             Long memoryThreshold = 439804651110L;
             //текущая память спутника
             AtomicLong currentMemory = new AtomicLong(satellite.getSatelliteType().getTotalMemory());
+
+            final long TOTAL_MEMORY = satellite.getSatelliteType().getTotalMemory();
             //скорость траты памяти при съемке
             long shootingMemorySpeed = satellite.getSatelliteType().getShootingSpeed();
             //скорость восполнения памяти при передаче
@@ -196,10 +196,14 @@ public class SchedulerCalculationService {
                 Optional<SatelliteFacilitySession> satelliteFacilitySession =
                         findSatelliteFacilitySession(satellite, startFreeInterval, endFreeInterval);
                 // если сессию передачи удалось найти - восстанавливаем объем текущей памяти
-                if (satelliteFacilitySession.isPresent()) {
+//                if (satelliteFacilitySession.isPresent()) {
+//                    addUnloadingSession(satelliteFacilitySession.get(), dataTransferSpeed, currentMemory, sessionMemorySpending);
+//                }
+                // пока удается найти сессию выгрузки данных и память не освобождена - будем выгружать
+                while (satelliteFacilitySession.isPresent() && currentMemory.get() <= TOTAL_MEMORY) {
                     SatelliteFacilitySession session = satelliteFacilitySession.get();
                     long sessionMemoryIncome = (-1) * (long) session.getDuration() * dataTransferSpeed;
-                    currentMemory.addAndGet(sessionMemorySpending);
+                    currentMemory.addAndGet(-sessionMemoryIncome);
                     CalculatedCommunicationSession broadcastSession = new CalculatedCommunicationSession(
                             session,
                             orderNumber.get(),
@@ -209,9 +213,10 @@ public class SchedulerCalculationService {
                     actualSatelliteSessions.add(broadcastSession);
                     orderNumber.getAndIncrement();
                     previousEndSession = session.getEndSessionTime();
+                    satelliteFacilitySession =
+                            findSatelliteFacilitySession(satellite, previousEndSession, endFreeInterval);
                 }
             }
-
             //копим информацию для миниотчета
             stringBuilder.append(satellite.getName()).append("\n");
             stringBuilder.append(previousEndSession).append("\n");
@@ -237,8 +242,8 @@ public class SchedulerCalculationService {
                                                                             LocalDateTime endFreeInterval) {
         //поиск подходящих сеансов
         List<SatelliteFacilitySession> concurrentSessionList = new ArrayList<>();
-        freeFacilitySessionsMap.forEach((key, value) -> {
-            Optional<SatelliteFacilitySession> optSession = value.stream()
+        freeFacilitySessionsMap.forEach((facility, satelliteFacilitySessions) -> {
+            Optional<SatelliteFacilitySession> optSession = satelliteFacilitySessions.stream()
                     .filter(session -> session.getSatellite().equals(satellite))
                     .filter(session -> session.getStartSessionTime().isAfter(startFreeInterval))
                     .filter(session -> session.getStartSessionTime().isBefore(endFreeInterval))
@@ -262,8 +267,6 @@ public class SchedulerCalculationService {
                 .toList();
         freeFacilitySessionsMap.get(currentFacility).removeAll(droppedSessions);
         //добавляем в итоговое расписание найденный сеанс спутник-приемник
-        Map<Satellite, List<SatelliteFacilitySession>> satelliteFacilitySessionMap =
-                Collections.singletonMap(satellite, Stream.of(bestSession).toList());
         if (actualFacilitySessionsMap.containsKey(currentFacility)) {
             Map<Satellite, List<SatelliteFacilitySession>> actualSessions =
                     actualFacilitySessionsMap.get(currentFacility);
@@ -283,4 +286,23 @@ public class SchedulerCalculationService {
         }
         return Optional.of(bestSession);
     }
+//
+//    private Optional<SatelliteFacilitySession> addUnloadingSession(SatelliteFacilitySession session,
+//                                                                   long dataTransferSpeed,
+//                                                                   AtomicLong currentMemory,
+//                                                                   List<CalculatedCommunicationSession> actualSatelliteSessions,
+//                                                                   AtomicInteger orderNumber) {
+//        long sessionMemoryIncome = (-1) * (long) session.getDuration() * dataTransferSpeed;
+//        currentMemory.addAndGet(-sessionMemoryIncome);
+//        CalculatedCommunicationSession broadcastSession = new CalculatedCommunicationSession(
+//                session,
+//                orderNumber.get(),
+//                sessionMemoryIncome,
+//                currentMemory.get()
+//        );
+//        actualSatelliteSessions.add(broadcastSession);
+//        orderNumber.getAndIncrement();
+//        previousEndSession = session.getEndSessionTime();
+//        return findSatelliteFacilitySession(satellite, previousEndSession, endFreeInterval);
+//    }
 }

@@ -13,11 +13,6 @@ import java.io.File;
 public class SatelliteProperties {
 
     /**
-     * Название схемы.
-     */
-    private String schemaName = "sat";
-
-    /**
      * Папка для сохранения выгрузки в альтернативном формате.
      */
     private File alternativeFormatDirectory;

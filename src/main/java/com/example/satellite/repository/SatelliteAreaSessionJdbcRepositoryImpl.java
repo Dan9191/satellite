@@ -4,6 +4,8 @@ import com.example.satellite.config.SatelliteProperties;
 import com.example.satellite.entity.SatelliteAreaSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +22,6 @@ import java.util.Objects;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSessionJdbcRepository {
 
     /**
@@ -29,14 +30,20 @@ public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSess
     private final JdbcTemplate jdbcTemplate;
 
     /**
-     * Настройки приложения.
+     * Название схемы.
      */
-    private final SatelliteProperties properties;
+    private String schemaName;
 
     private static final String INSERT_SESSION = "insert into %s.satellite_area_session("
             + "satellite_id, area_id, order_number, start_session_time, end_session_time, duration"
             + ") values (?, ?, ?, ?, ?, ?) returning id";
 
+    @Autowired
+    public SatelliteAreaSessionJdbcRepositoryImpl(JdbcTemplate jdbcTemplate,
+                                                  @Value("${spring.flyway.schemas}") String schemaName) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.schemaName = schemaName;
+    }
 
     /**
      * Пакетное сохранение сеансов связи.
@@ -46,7 +53,7 @@ public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSess
     @Override
     public void saveBatch(List<SatelliteAreaSession> sessionList) {
         try (Connection connection = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
-            PreparedStatement ps = connection.prepareStatement(String.format(INSERT_SESSION, properties.getSchemaName()),
+            PreparedStatement ps = connection.prepareStatement(String.format(INSERT_SESSION, schemaName),
                     Statement.RETURN_GENERATED_KEYS);
 
             for (SatelliteAreaSession session : sessionList) {

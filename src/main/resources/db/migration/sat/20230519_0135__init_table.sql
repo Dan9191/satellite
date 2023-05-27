@@ -1,5 +1,3 @@
-set search_path to sat;
-
 -- Таблица приемников
 create table facility
 (
