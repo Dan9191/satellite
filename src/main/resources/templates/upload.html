@@ -28,26 +28,27 @@
 <div class="container">
     <h3>Загрузка Constellation файла</h3>
     <div class="mt-3">
-        <form th:action="@{/v1/api/area-upload}" method="post" enctype="multipart/form-data">
+        <form th:action="@{/v2/api/area-upload}" method="post" enctype="multipart/form-data">
             <input class="form-control" name="file" type="file"><br/>
             <input type="submit" value="Загрузить" class="btn btn-primary btn-sm">
         </form>
     </div>
     <h3>Загрузка Facility файла</h3>
     <div class="mt-3">
-        <form th:action="@{/v1/api/facility-upload}" method="post" enctype="multipart/form-data">
+        <form th:action="@{/v2/api/facility-upload}" method="post" enctype="multipart/form-data">
             <input class="form-control" name="file" type="file"><br/>
             <input type="submit" value="Загрузить" class="btn btn-primary btn-sm">
         </form>
     </div>
-
+    <br/>
     <h3>Вычислить расписание</h3>
     <div class="mt-3">
-        <form th:action="@{/v1/api/calculate-schedule}" method="get" enctype="multipart/form-data">
+        <form th:action="@{/v2/api/calculate-schedule}" method="get" enctype="multipart/form-data">
             <input type="submit" value="Вычислить" class="btn btn-primary btn-sm">
         </form>
     </div>
 
+    <br/>
     <div class="mb-3" th:if="${message != null}">
         <div class="alert alert-success" role="alert" th:text="${message}"></div>
     </div>
