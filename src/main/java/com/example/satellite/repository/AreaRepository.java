@@ -10,5 +10,5 @@ import java.util.Optional;
 @Repository
 public interface AreaRepository extends JpaRepository<Area, Integer> {
 
-    Optional<Area> findFirstByName(String name);
+    Optional<Area> findByName(String name);
 }

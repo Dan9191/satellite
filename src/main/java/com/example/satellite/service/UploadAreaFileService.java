@@ -60,7 +60,7 @@ public class UploadAreaFileService {
         String areaName = baseFileName.replaceAll(AREA_NAME_PREFIX, "");
         List<String> allRows = new BufferedReader(new InputStreamReader(file.getInputStream())).lines().toList();
         Map<String, List<CommunicationSession>> sessionMap = parseFile(allRows);
-        Area area = areaRepository.findFirstByName(areaName).orElse(new Area(areaName));
+        Area area = areaRepository.findByName(areaName).orElse(new Area(areaName));
         areaRepository.save(area);
         sessionMap.forEach((key, value) -> {
             Satellite satellite;
