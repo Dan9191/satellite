@@ -47,14 +47,15 @@ public class MemoryUtils {
 
     public static String readableSize(long fullSessionDeltaMemory) {
         String cnt_size;
-        long size_kb = fullSessionDeltaMemory /1024;
+        long bite = fullSessionDeltaMemory / 8;
+        long size_kb = bite / 1024;
         long size_mb = size_kb / 1024;
-        long size_gb = size_mb / 1024 ;
-        if (size_gb > 0){
+        long size_gb = size_mb / 1024;
+        if (size_gb > 0) {
             cnt_size = size_gb + " GB";
-        }else if(size_mb > 0){
+        } else if (size_mb > 0) {
             cnt_size = size_mb + " MB";
-        }else{
+        } else {
             cnt_size = size_kb + " KB";
         }
         return cnt_size;

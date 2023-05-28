@@ -208,7 +208,7 @@ public class SchedulerCalculationService {
                     CalculatedCommunicationSession broadcastSession = new CalculatedCommunicationSession(
                             session,
                             orderNumber.get(),
-                            sessionMemoryIncome,
+                            realSendingDelta,
                             currentMemory,
                             MemoryUtils.readableSize(memorySendingSum)
                     );
@@ -237,7 +237,7 @@ public class SchedulerCalculationService {
                     CalculatedCommunicationSession broadcastSession = new CalculatedCommunicationSession(
                             session,
                             orderNumber.get(),
-                            sessionMemoryIncome,
+                            realSendingDelta,
                             currentMemory,
                             MemoryUtils.readableSize(memorySendingSum)
                     );
