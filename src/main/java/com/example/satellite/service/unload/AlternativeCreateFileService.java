@@ -43,13 +43,16 @@ public class AlternativeCreateFileService {
             String fileName = String.format("%s.txt", satellite.getName());
             File scheduleFile = new File(properties.getAlternativeFormatDirectory(), fileName);
 
+            StringBuilder comSessions = new StringBuilder();
             try (FileOutputStream fileOutputStream = new FileOutputStream(scheduleFile);
                  Writer fos = new OutputStreamWriter(fileOutputStream, StandardCharsets.UTF_8)) {
+                comSessions.append(String.format("%20s %30s %30s %20s %30s %30s\r\n\n", "Session With", "Start Session Time", "End Session Time", "Duration", "Change in memory per session", "Current memory"));
                 String sessions = calculatedCommunicationSessions.stream()
                         .map(CalculatedCommunicationSession::toString)
                         .collect(Collectors.joining("\n"));
+                comSessions.append(sessions);
                 try {
-                    fos.append(sessions);
+                    fos.append(comSessions.toString());
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
