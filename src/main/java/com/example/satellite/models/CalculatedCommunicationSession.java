@@ -58,6 +58,11 @@ public class CalculatedCommunicationSession {
     private Long currentMemory;
 
     /**
+     * Объем переданной информации на момент сеанса.
+     */
+    private String memorySendingSum;
+
+    /**
      * Конструктор сеанса, который пойдет в конечное расписание. Вычисляется из сеанса спутник-съемка.
      *
      * @param session        Данные сеанса
@@ -68,7 +73,8 @@ public class CalculatedCommunicationSession {
     public CalculatedCommunicationSession(SatelliteAreaSession session,
                                           Integer number,
                                           Long durationMemory,
-                                          Long currentMemory) {
+                                          Long currentMemory,
+                                          String memorySendingSum) {
         this.number = number;
         this.owner = session.getSatellite();
         this.secondObject = session.getArea().getName();
@@ -77,6 +83,7 @@ public class CalculatedCommunicationSession {
         this.duration = session.getDuration();
         this.durationMemory = durationMemory;
         this.currentMemory = currentMemory;
+        this.memorySendingSum = memorySendingSum;
     }
 
     /**
@@ -90,7 +97,8 @@ public class CalculatedCommunicationSession {
     public CalculatedCommunicationSession(SatelliteFacilitySession session,
                                           Integer number,
                                           Long durationMemory,
-                                          Long currentMemory) {
+                                          Long currentMemory,
+                                          String memorySendingSum) {
         this.number = number;
         this.owner = session.getSatellite();
         this.secondObject = session.getFacility().getName();
@@ -99,6 +107,7 @@ public class CalculatedCommunicationSession {
         this.duration = session.getDuration();
         this.durationMemory = durationMemory;
         this.currentMemory = currentMemory;
+        this.memorySendingSum = memorySendingSum;
     }
 
     @Override
@@ -109,6 +118,7 @@ public class CalculatedCommunicationSession {
                 "         " + endSessionTime +
                 "         " + duration +
                 "         " + durationMemory +
-                "         " + currentMemory;
+                "         " + currentMemory +
+                "         " + memorySendingSum;
     }
 }

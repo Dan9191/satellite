@@ -12,11 +12,9 @@ import com.example.satellite.repository.SatelliteRepository;
 import com.example.satellite.service.unload.AlternativeCreateFileService;
 import com.example.satellite.service.unload.AreaFileService;
 import com.example.satellite.service.unload.FacilityFileService;
-import com.example.satellite.utils.HttpFileUtils;
+import com.example.satellite.utils.MemoryUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 
 import static com.example.satellite.utils.ConstantUtils.IS_SENDING_TIME;
@@ -87,8 +84,7 @@ public class SchedulerCalculationService {
     /**
      * Набросок метода для вычисления времени конца памяти у каждого из спутников.
      */
-    public void findFasterSatellite() {
-
+    public void calculateSchedule() {
         long startTime = System.currentTimeMillis();
         log.info("Start process {}", LocalDateTime.now());
         log.info("Start calculated facility schedule ");
@@ -106,8 +102,6 @@ public class SchedulerCalculationService {
 
         areaFileService.createFile(satelliteAreaSessionsMap);
         facilityFileService.createFile(actualFacilitySessionsMap);
-
-       // return HttpFileUtils.uploadFile(areaFileService.createFile(satelliteAreaSessionsMap), "Sessions_report");
     }
 
     /**
@@ -115,7 +109,7 @@ public class SchedulerCalculationService {
      *
      * @return Мапа сеансов связи спутника с землей, где key - назменый приемник, value - список его сеансов.
      */
-    private Map<Facility, List<SatelliteFacilitySession>> findAllFacilitySessionsMap() {
+    private synchronized Map<Facility, List<SatelliteFacilitySession>> findAllFacilitySessionsMap() {
         List<Facility> facilityList = facilityRepository.findAll();
         Map<Facility, List<SatelliteFacilitySession>> facilityScheduleMap = new HashMap<>();
         facilityList.forEach(facility -> {
@@ -132,7 +126,7 @@ public class SchedulerCalculationService {
      *
      * @return Мапа сеансов съемки спутника, где key - спутник, value - сеансы съемки.
      */
-    private Map<Satellite, List<SatelliteAreaSession>> findAllSatelliteAreaSessionsMap() {
+    private synchronized Map<Satellite, List<SatelliteAreaSession>> findAllSatelliteAreaSessionsMap() {
         List<Satellite> satelliteList = satelliteRepository.findAll();
         Map<Satellite, List<SatelliteAreaSession>> areaScheduleMap = new HashMap<>();
         satelliteList.forEach(satellite -> {
@@ -158,43 +152,44 @@ public class SchedulerCalculationService {
             //итоговое расписание сеансов спутника
             List<CalculatedCommunicationSession> actualSatelliteSessions = new ArrayList<>();
             //возможно надо ввести дельту, которая будет увеличивать каждый день минимальный порог загроможденности памяти?
-            Long memoryThreshold = 439804651110L;
+            //  Long memoryThreshold = 439804651110L;
             //текущая память спутника
-            AtomicLong currentMemory = new AtomicLong(satellite.getSatelliteType().getTotalMemory());
-
+            long currentMemory = satellite.getSatelliteType().getTotalMemory();
             final long TOTAL_MEMORY = satellite.getSatelliteType().getTotalMemory();
             //скорость траты памяти при съемке
             long shootingMemorySpeed = satellite.getSatelliteType().getShootingSpeed();
             //скорость восполнения памяти при передаче
             long dataTransferSpeed = satellite.getSatelliteType().getDataTransferSpeed();
+            //суммарный объем переданной информации
+            long memorySendingSum = 0L;
             //порядковый номер сеанса
             AtomicInteger orderNumber = new AtomicInteger(1);
-            //конец предыдущего сеанса связи или съекмки
+            //конец предыдущего сеанса связи или съемки
             LocalDateTime previousEndSession = LocalDateTime.MIN;
 
+            //дата первого переполнения памяти
+            Optional<LocalDateTime> memoryOverflowData = Optional.empty();
+
             for (int i = 0; i < sessionsList.size() - 1; i++) {
-                //если память переполнилась, то завершаем формирование расписания
-                if (currentMemory.get() <= 0L) {
-                    break;
-                }
                 SatelliteAreaSession previousSession = sessionsList.get(i);
                 SatelliteAreaSession nextSession = sessionsList.get(i + 1);
                 LocalDateTime startFreeInterval = previousSession.getEndSessionTime();
                 LocalDateTime endFreeInterval = nextSession.getStartSessionTime();
                 //если конец предыдущего сеанса позже, чем начало текущего, то пропускаем итерацию цикла.
-                //Возможно, если цикл передачи наложится на цикл съемки
+                //это возможно, если цикл передачи наложится на цикл съемки
                 if (previousEndSession.isAfter(previousSession.getStartSessionTime())) {
                     continue;
                 }
                 long sessionMemorySpending = (long) previousSession.getDuration() * shootingMemorySpeed;
-                currentMemory.addAndGet(-sessionMemorySpending);
+                currentMemory = MemoryUtils.memorySubtraction(currentMemory, sessionMemorySpending);
                 //производим вычисление первой сессии съемки земли
                 actualSatelliteSessions.add(
                         new CalculatedCommunicationSession(
                                 previousSession,
                                 orderNumber.get(),
                                 sessionMemorySpending,
-                                currentMemory.get()
+                                currentMemory,
+                                MemoryUtils.readableSize(memorySendingSum)
                         ));
                 orderNumber.getAndIncrement();
                 previousEndSession = previousSession.getEndSessionTime();
@@ -204,13 +199,17 @@ public class SchedulerCalculationService {
                 // если сессию передачи удалось найти - восстанавливаем объем текущей памяти
                 if (satelliteFacilitySession.isPresent()) {
                     SatelliteFacilitySession session = satelliteFacilitySession.get();
-                    long sessionMemoryIncome = (-1) * (long) session.getDuration() * dataTransferSpeed;
-                    currentMemory.addAndGet(-sessionMemoryIncome);
+                    long sessionMemoryIncome = (long) session.getDuration() * dataTransferSpeed;
+                    long memoryAfterSending = MemoryUtils.memorySum(currentMemory, sessionMemoryIncome, TOTAL_MEMORY);
+                    long realSendingDelta = MemoryUtils.actuallySendingMemory(sessionMemoryIncome, currentMemory, memoryAfterSending);
+                    memorySendingSum += realSendingDelta;
+                    currentMemory = memoryAfterSending;
                     CalculatedCommunicationSession broadcastSession = new CalculatedCommunicationSession(
                             session,
                             orderNumber.get(),
                             sessionMemoryIncome,
-                            currentMemory.get()
+                            currentMemory,
+                            MemoryUtils.readableSize(memorySendingSum)
                     );
                     actualSatelliteSessions.add(broadcastSession);
                     orderNumber.getAndIncrement();
@@ -218,17 +217,28 @@ public class SchedulerCalculationService {
                     satelliteFacilitySession =
                             findSatelliteFacilitySession(satellite, previousEndSession, endFreeInterval);
                 }
+
+                //если произошло первое опустошение памяти - сохраняем такую дату
+                if (currentMemory == 0L && memoryOverflowData.isEmpty()) {
+                    memoryOverflowData = Optional.of(endFreeInterval);
+                }
+
                 // если темное время суток,память не до конца свободна и пока удается найти сессию выгрузки данных-будем выгружать
                 while (satelliteFacilitySession.isPresent()
-                        && currentMemory.get() <= TOTAL_MEMORY && IS_SENDING_TIME.test(previousEndSession)) {
+                        && currentMemory <= TOTAL_MEMORY - 100
+                        && IS_SENDING_TIME.test(previousEndSession)) {
                     SatelliteFacilitySession session = satelliteFacilitySession.get();
-                    long sessionMemoryIncome = (-1) * (long) session.getDuration() * dataTransferSpeed;
-                    currentMemory.addAndGet(-sessionMemoryIncome);
+                    long sessionMemoryIncome = (long) session.getDuration() * dataTransferSpeed;
+                    long memoryAfterSending = MemoryUtils.memorySum(currentMemory, sessionMemoryIncome, TOTAL_MEMORY);
+                    long realSendingDelta = MemoryUtils.actuallySendingMemory(sessionMemoryIncome, currentMemory, memoryAfterSending);
+                    memorySendingSum += realSendingDelta;
+                    currentMemory = memoryAfterSending;
                     CalculatedCommunicationSession broadcastSession = new CalculatedCommunicationSession(
                             session,
                             orderNumber.get(),
                             sessionMemoryIncome,
-                            currentMemory.get()
+                            currentMemory,
+                            MemoryUtils.readableSize(memorySendingSum)
                     );
                     actualSatelliteSessions.add(broadcastSession);
                     orderNumber.getAndIncrement();
@@ -238,10 +248,15 @@ public class SchedulerCalculationService {
                 }
             }
             //копим информацию для миниотчета
-            stringBuilder.append(satellite.getName()).append("\n");
-            stringBuilder.append(previousEndSession).append("\n");
-            stringBuilder.append(currentMemory).append("\n");
-            stringBuilder.append("---------").append("\n");
+            stringBuilder.append("Имя спутника: ").append(satellite.getName()).append("\n");
+            if (memoryOverflowData.isPresent()) {
+                stringBuilder.append("Дата переполнения памяти спутника: ").append(memoryOverflowData.get()).append("\n");
+            } else {
+                stringBuilder.append("Дата переполнения памяти спутника: ").append("Спутник не переполнялся").append("\n");
+            }
+            stringBuilder.append("Объем переданной информации за весь период планирования: ")
+                    .append(MemoryUtils.readableSize(memorySendingSum)).append("\n");
+            stringBuilder.append("---").append("\n");
 
             finishedScheduleMap.put(satellite, actualSatelliteSessions);
         });
@@ -257,7 +272,7 @@ public class SchedulerCalculationService {
      * @param endFreeInterval   Конец интервала, в который спутник доступен для передачи данных.
      * @return Сеанс связи спутника и земли
      */
-    private Optional<SatelliteFacilitySession> findSatelliteFacilitySession(Satellite satellite,
+    private synchronized Optional<SatelliteFacilitySession> findSatelliteFacilitySession(Satellite satellite,
                                                                             LocalDateTime startFreeInterval,
                                                                             LocalDateTime endFreeInterval) {
         //поиск подходящих сеансов
@@ -306,23 +321,4 @@ public class SchedulerCalculationService {
         }
         return Optional.of(bestSession);
     }
-//
-//    private Optional<SatelliteFacilitySession> addUnloadingSession(SatelliteFacilitySession session,
-//                                                                   long dataTransferSpeed,
-//                                                                   AtomicLong currentMemory,
-//                                                                   List<CalculatedCommunicationSession> actualSatelliteSessions,
-//                                                                   AtomicInteger orderNumber) {
-//        long sessionMemoryIncome = (-1) * (long) session.getDuration() * dataTransferSpeed;
-//        currentMemory.addAndGet(-sessionMemoryIncome);
-//        CalculatedCommunicationSession broadcastSession = new CalculatedCommunicationSession(
-//                session,
-//                orderNumber.get(),
-//                sessionMemoryIncome,
-//                currentMemory.get()
-//        );
-//        actualSatelliteSessions.add(broadcastSession);
-//        orderNumber.getAndIncrement();
-//        previousEndSession = session.getEndSessionTime();
-//        return findSatelliteFacilitySession(satellite, previousEndSession, endFreeInterval);
-//    }
 }
