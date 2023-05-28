@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.example.satellite.utils.ConstantUtils.AREA_NAME_PREFIX;
 import static com.example.satellite.utils.ConstantUtils.DATE_TIME_FORMATTER;
@@ -59,6 +60,10 @@ public class UploadAreaFileService {
      */
     public void readFile(MultipartFile file) throws IOException {
         String baseFileName = FilenameUtils.getBaseName(file.getOriginalFilename());
+        if (file.isEmpty()) {
+            log.error("file is empty.");
+            throw new IOException("Треубется выбрать файл для загрузки");
+        }
         //проверка начилия файла в БД
         if (uploadedFilesRepository.findByName(baseFileName).isPresent()) {
             log.error("file '{}' has already been loaded into the database.", baseFileName);
