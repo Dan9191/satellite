@@ -45,7 +45,7 @@ public class MainController {
     @GetMapping("/calculate-schedule")
     public String calculateSchedule(Model model) {
         long startTime = System.currentTimeMillis();
-        schedulerCalculationService.findFasterSatellite();
+        schedulerCalculationService.calculateSchedule();
         String message = String.format("Успешно вычислено за %s секунд", (System.currentTimeMillis() - startTime)/1000);
         model.addAttribute("message", message);
         return "upload";

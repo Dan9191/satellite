@@ -1,6 +1,5 @@
 package com.example.satellite.repository;
 
-import com.example.satellite.config.SatelliteProperties;
 import com.example.satellite.entity.SatelliteFacilitySession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +20,6 @@ import java.util.Objects;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class SatelliteFacilitySessionJdbcRepositoryImpl implements SatelliteFacilitySessionJdbcRepository {
 
     /**
@@ -32,7 +30,7 @@ public class SatelliteFacilitySessionJdbcRepositoryImpl implements SatelliteFaci
     /**
      * Название схемы.
      */
-    private String schemaName;
+    private final String schemaName;
 
     private static final String INSERT_SESSION = "insert into %s.satellite_facility_session("
             + "satellite_id, facility_id, order_number, start_session_time, end_session_time, duration"

@@ -22,7 +22,6 @@ public class SatelliteProperties {
      */
     private File facilityDirectory;
 
-
     /**
      * Папка для сохранения расписаний работы приемников.
      */
