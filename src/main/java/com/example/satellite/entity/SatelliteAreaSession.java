@@ -57,9 +57,6 @@ public class SatelliteAreaSession {
 
     @Override
     public String toString() {
-        return "         " + orderNumber
-                + "         " + startSessionTime
-                + "         " + endSessionTime
-                + "         " + duration;
+        return String.format("%20s %30s %30s %20s", orderNumber, startSessionTime, endSessionTime, duration);
     }
 }
