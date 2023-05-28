@@ -59,6 +59,10 @@ public class UploadAreaFileService {
      */
     public void readFile(MultipartFile file) throws IOException {
         String baseFileName = FilenameUtils.getBaseName(file.getOriginalFilename());
+        if (file.isEmpty()) {
+            log.error("file is empty.");
+            throw new IOException("Треубется выбрать файл для загрузки");
+        }
         //проверка начилия файла в БД
         if (uploadedFilesRepository.findByName(baseFileName).isPresent()) {
             log.error("file '{}' has already been loaded into the database.", baseFileName);

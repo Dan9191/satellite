@@ -1,8 +1,6 @@
 package com.example.satellite.repository;
 
-import com.example.satellite.config.SatelliteProperties;
 import com.example.satellite.entity.SatelliteAreaSession;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +30,7 @@ public class SatelliteAreaSessionJdbcRepositoryImpl implements SatelliteAreaSess
     /**
      * Название схемы.
      */
-    private String schemaName;
+    private final String schemaName;
 
     private static final String INSERT_SESSION = "insert into %s.satellite_area_session("
             + "satellite_id, area_id, order_number, start_session_time, end_session_time, duration"

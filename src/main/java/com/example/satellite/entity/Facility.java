@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Приемник.
+ * Наземная станция.
  */
 @Data
 @Entity
