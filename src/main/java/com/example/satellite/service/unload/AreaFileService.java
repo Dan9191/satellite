@@ -34,6 +34,8 @@ public class AreaFileService {
      */
     private final SatelliteProperties properties;
 
+    private long accessCounter = 0;
+
     /**
      * Тут нужно сформировать файл для сеансов траектории.
      *
@@ -66,9 +68,10 @@ public class AreaFileService {
                 StringBuilder sessions = new StringBuilder();
                 Set<Satellite> satelliteSet = satelliteSessionsMap.keySet();
                 for (Satellite satellite: satelliteSet) {
-                    sessions.append("\n").append(satellite.getName()).append("\n");
+                    sessions.append("\n").append(satellite.getName()).append("\n\n");
+                    sessions.append(String.format("Access %20s %30s %30s %20s\r\n\n", "Order Number", "Start Session Time", "End Session Time", "Duration"));
                     String sessionsRows = satelliteSessionsMap.get(satellite).stream()
-                            .map(SatelliteAreaSession::toString)
+                            .map(sas -> ++accessCounter + sas.toString())
                             .collect(Collectors.joining("\n"));
                     sessions.append(sessionsRows);
                 }
