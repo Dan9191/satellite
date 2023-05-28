@@ -5,6 +5,7 @@ import com.example.satellite.entity.Satellite;
 import com.example.satellite.entity.SatelliteAreaSession;
 import com.example.satellite.entity.SatelliteFacilitySession;
 import com.example.satellite.models.CalculatedCommunicationSession;
+import com.example.satellite.models.ReportsRow;
 import com.example.satellite.repository.FacilityRepository;
 import com.example.satellite.repository.SatelliteAreaSessionRepository;
 import com.example.satellite.repository.SatelliteFacilitySessionRepository;
@@ -147,7 +148,7 @@ public class SchedulerCalculationService {
      */
     private void memoryOverflowTime(Map<Satellite, List<SatelliteAreaSession>> satelliteAreaSessionsMap) {
         Map<Satellite, List<CalculatedCommunicationSession>> finishedScheduleMap = new HashMap<>();
-        StringBuilder stringBuilder = new StringBuilder();
+        List<ReportsRow> reportsRows = new ArrayList<>();
         satelliteAreaSessionsMap.forEach((satellite, sessionsList) -> {
             //итоговое расписание сеансов спутника
             List<CalculatedCommunicationSession> actualSatelliteSessions = new ArrayList<>();
@@ -248,19 +249,10 @@ public class SchedulerCalculationService {
                 }
             }
             //копим информацию для миниотчета
-            stringBuilder.append("Имя спутника: ").append(satellite.getName()).append("\n");
-            if (memoryOverflowData.isPresent()) {
-                stringBuilder.append("Дата переполнения памяти спутника: ").append(memoryOverflowData.get()).append("\n");
-            } else {
-                stringBuilder.append("Дата переполнения памяти спутника: ").append("Спутник не переполнялся").append("\n");
-            }
-            stringBuilder.append("Объем переданной информации за весь период планирования: ")
-                    .append(MemoryUtils.readableSize(memorySendingSum)).append("\n");
-            stringBuilder.append("---").append("\n");
-
+            reportsRows.add(new ReportsRow(satellite.getName(), memoryOverflowData, MemoryUtils.readableSize(memorySendingSum)));
             finishedScheduleMap.put(satellite, actualSatelliteSessions);
         });
-        alternativeCreateFileService.report(stringBuilder.toString());
+        alternativeCreateFileService.report(reportsRows);
         alternativeCreateFileService.createFile(finishedScheduleMap);
     }
 
