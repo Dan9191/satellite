@@ -1,24 +1,24 @@
--- Таблица приемников
+-- Таблица Наземных станция
 create table facility
 (
     id   serial PRIMARY KEY,
     name text   not null
 );
 
-comment on table facility is 'Приемник';
+comment on table facility is 'Наземная станция';
 comment on column facility.id is 'ID';
-comment on column facility.name is 'Имя приемника';
+comment on column facility.name is 'Имя наземной станции';
 
--- Таблица территорий
+-- Таблица создвездий/плеяд спутников
 create table area
 (
     id   serial PRIMARY KEY,
     name text   not null
 );
 
-comment on table area is 'Территория';
+comment on table area is 'Создвездие/плеяды спутников';
 comment on column area.id is 'ID';
-comment on column area.name is 'Название пояса';
+comment on column area.name is 'Название создвездия/плеяды спутников';
 
 
 -- Таблица типов спутника
@@ -57,7 +57,7 @@ comment on column satellite.name is 'Название спутника';
 comment on column satellite.satellite_type_id is 'ID типа спутника';
 comment on column satellite.area_id is 'Принадлежность к группе спутников из одной орбиты';
 
--- Таблица сеансов Приемник-Спутник
+-- Таблица сеансов Наземная станция-Спутник
 create table satellite_facility_session
 (
     id                 serial PRIMARY KEY,
@@ -69,16 +69,16 @@ create table satellite_facility_session
     duration           float
 );
 
-comment on table satellite_facility_session is 'Таблица сеансов передачи данных Приемник-Спутник';
+comment on table satellite_facility_session is 'Таблица сеансов передачи данных Наземная станция-Спутник';
 comment on column satellite_facility_session.id is 'ID';
 comment on column satellite_facility_session.satellite_id is 'ID спутника';
-comment on column satellite_facility_session.facility_id is 'ID приемника';
+comment on column satellite_facility_session.facility_id is 'ID Наземная станция';
 comment on column satellite_facility_session.order_number is 'Порядковый номер сеанса';
 comment on column satellite_facility_session.start_session_time is 'Начало сеанса передачи данных';
 comment on column satellite_facility_session.end_session_time is 'Конец сеанса передачи данных';
 comment on column satellite_facility_session.duration is 'Продолжительность сеанса передачи данных';
 
--- Таблица пролета спутника над территорией РФ
+-- Таблица сеансов съемок спутника
 create table satellite_area_session
 (
     id                 serial PRIMARY KEY,
@@ -90,10 +90,10 @@ create table satellite_area_session
     duration           float
 );
 
-comment on table satellite_area_session is 'Таблица пролета спутника над территорией РФ';
+comment on table satellite_area_session is 'ТТаблица сеансов съемок спутника';
 comment on column satellite_area_session.id is 'ID';
 comment on column satellite_area_session.satellite_id is 'ID спутника';
-comment on column satellite_area_session.area_id is 'ID участка территории РФ (соответствует орбитам спутника)';
+comment on column satellite_area_session.area_id is 'ID участка территории РФ (созвездиям/плеядам спутников)';
 comment on column satellite_area_session.order_number is 'Порядковый номер сеанса';
 comment on column satellite_area_session.start_session_time is 'Начало сеанса вхождения на территорию РФ';
 comment on column satellite_area_session.end_session_time is 'Конец сеанса вхождения на территорию РФ';
