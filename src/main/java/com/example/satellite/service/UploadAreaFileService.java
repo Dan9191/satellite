@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.example.satellite.utils.ConstantUtils.AREA_NAME_PREFIX;
 import static com.example.satellite.utils.ConstantUtils.DATE_TIME_FORMATTER;

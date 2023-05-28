@@ -90,7 +90,7 @@ create table satellite_area_session
     duration           float
 );
 
-comment on table satellite_area_session is 'ТТаблица сеансов съемок спутника';
+comment on table satellite_area_session is 'Таблица сеансов съемок спутника';
 comment on column satellite_area_session.id is 'ID';
 comment on column satellite_area_session.satellite_id is 'ID спутника';
 comment on column satellite_area_session.area_id is 'ID участка территории РФ (созвездиям/плеядам спутников)';
