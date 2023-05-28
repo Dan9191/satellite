@@ -112,7 +112,7 @@ public class CalculatedCommunicationSession {
 
     @Override
     public String toString() {
-        return String.format("%20s %30s %30s %20s %30s %30s", secondObject,
-                startSessionTime, endSessionTime, duration, durationMemory, currentMemory);
+        return String.format("%20s %30s %30s %20s %30s %30s %30s", secondObject,
+                startSessionTime, endSessionTime, duration, durationMemory, currentMemory, memorySendingSum);
     }
 }
