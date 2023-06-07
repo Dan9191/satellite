@@ -5,6 +5,8 @@ import com.example.satellite.service.UploadFacilityFileService;
 import com.example.satellite.service.calculation.SchedulerCalculationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -43,12 +46,12 @@ public class MainController {
      * Запуск вычисления расписания.
      */
     @GetMapping("/calculate-schedule")
-    public String calculateSchedule(Model model) {
+    public ResponseEntity<InputStreamResource> calculateSchedule(Model model) throws IOException {
         long startTime = System.currentTimeMillis();
-        schedulerCalculationService.calculateSchedule();
+        ResponseEntity<InputStreamResource> archive = schedulerCalculationService.calculateSchedule();
         String message = String.format("Успешно вычислено за %s секунд", (System.currentTimeMillis() - startTime)/1000);
         model.addAttribute("message", message);
-        return "upload";
+        return archive;
     }
 
     /**

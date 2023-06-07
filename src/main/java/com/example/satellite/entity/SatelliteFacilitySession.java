@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -46,6 +47,9 @@ public class SatelliteFacilitySession {
     @Column(name = "duration")
     private float duration;
 
+    @Transient
+    private String dataMb;
+
     public SatelliteFacilitySession(Satellite satellite, Facility facility, CommunicationSession session) {
         this.satellite = satellite;
         this.facility = facility;
@@ -57,6 +61,7 @@ public class SatelliteFacilitySession {
 
     @Override
     public String toString() {
-        return String.format("%30s %30s %20s", startSessionTime, endSessionTime, duration);
+        return String.format("%20s %20s %20s %20s %20s", startSessionTime, endSessionTime, duration,
+                satellite.getName(), dataMb);
     }
 }

@@ -13,11 +13,21 @@ import com.example.satellite.repository.SatelliteRepository;
 import com.example.satellite.service.unload.AlternativeCreateFileService;
 import com.example.satellite.service.unload.AreaFileService;
 import com.example.satellite.service.unload.FacilityFileService;
+import com.example.satellite.utils.HttpFileUtils;
 import com.example.satellite.utils.MemoryUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.lingala.zip4j.ZipFile;
+import org.apache.commons.io.FileUtils;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -28,8 +38,12 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
+import static com.example.satellite.utils.ConstantUtils.ALTERNATIVE_DIRECTORY;
+import static com.example.satellite.utils.ConstantUtils.AREA_DIRECTORY;
+import static com.example.satellite.utils.ConstantUtils.FACILITY_DIRECTORY;
 import static com.example.satellite.utils.ConstantUtils.IS_SENDING_TIME;
 import static com.example.satellite.utils.ConstantUtils.IS_SHOOTING_TIME;
+import static com.example.satellite.utils.ConstantUtils.MAIN_DIRECTORY;
 
 @Service
 @RequiredArgsConstructor
@@ -85,7 +99,9 @@ public class SchedulerCalculationService {
     /**
      * Набросок метода для вычисления времени конца памяти у каждого из спутников.
      */
-    public void calculateSchedule() {
+    public ResponseEntity<InputStreamResource> calculateSchedule() throws IOException {
+        FileUtils.deleteQuietly(new File(String.format("%s.zip", MAIN_DIRECTORY)));
+    //public void calculateSchedule() throws IOException {
         long startTime = System.currentTimeMillis();
         log.info("Start process {}", LocalDateTime.now());
         log.info("Start calculated facility schedule ");
@@ -98,17 +114,31 @@ public class SchedulerCalculationService {
         log.info("End calculated area schedule {} ms", System.currentTimeMillis() - stageTime);
         stageTime = System.currentTimeMillis();
         log.info("Start calculated full schedule");
-        memoryOverflowTime(satelliteAreaSessionsMap);
-        log.info("End calculated memory Overflow Time {}", System.currentTimeMillis() - stageTime );
 
-        areaFileService.createFile(satelliteAreaSessionsMap);
-        facilityFileService.createFile(actualFacilitySessionsMap);
+        Path mainDir = Files.createDirectories(Paths.get(MAIN_DIRECTORY));
+        Path areaDir = Files.createDirectories(Paths.get(MAIN_DIRECTORY, AREA_DIRECTORY));
+        Path facilityDir = Files.createDirectories(Paths.get(MAIN_DIRECTORY, FACILITY_DIRECTORY));
+        Path alternativeDir = Files.createDirectories(Paths.get(MAIN_DIRECTORY, ALTERNATIVE_DIRECTORY));
+        File zip = new File(String.format("%s.zip", MAIN_DIRECTORY));
+        ZipFile zipArchiver = new ZipFile(zip);
+        zipArchiver.close();
+        memoryOverflowTime(satelliteAreaSessionsMap, zipArchiver);
+
+        areaFileService.createFile(satelliteAreaSessionsMap, zipArchiver);
+        facilityFileService.createFile(actualFacilitySessionsMap, zipArchiver);
+
+
+        areaFileService.createFile(satelliteAreaSessionsMap, zipArchiver);
+        facilityFileService.createFile(actualFacilitySessionsMap, zipArchiver);
+        FileUtils.deleteQuietly(mainDir.toFile());
+        log.info("End calculated memory Overflow Time {}", System.currentTimeMillis() - stageTime );
+        return HttpFileUtils.uploadFile(zipArchiver.getFile(), "calculatedSchedule");
     }
 
     /**
-     * Собирает данные о всех сеансах связи спутника с назменым приемником.
+     * Собирает данные о всех сеансах связи спутника с наземным приемником.
      *
-     * @return Мапа сеансов связи спутника с землей, где key - назменый приемник, value - список его сеансов.
+     * @return Мапа сеансов связи спутника с землей, где key - наземный приемник, value - список его сеансов.
      */
     private synchronized Map<Facility, List<SatelliteFacilitySession>> findAllFacilitySessionsMap() {
         List<Facility> facilityList = facilityRepository.findAll();
@@ -144,9 +174,10 @@ public class SchedulerCalculationService {
     /**
      * Вычисляет время переполнения памяти.
      *
-     *  @param satelliteAreaSessionsMap Мапа сеансов съемки спутника, где key - спутник, value - сеансы съемки.
+     * @param satelliteAreaSessionsMap Мапа сеансов съемки спутника, где key - спутник, value - сеансы съемки.
+     * @param zipArchiver              Архив с отчетами.
      */
-    private void memoryOverflowTime(Map<Satellite, List<SatelliteAreaSession>> satelliteAreaSessionsMap) {
+    private void memoryOverflowTime(Map<Satellite, List<SatelliteAreaSession>> satelliteAreaSessionsMap, ZipFile zipArchiver) {
         Map<Satellite, List<CalculatedCommunicationSession>> finishedScheduleMap = new HashMap<>();
         List<ReportsRow> reportsRows = new ArrayList<>();
         satelliteAreaSessionsMap.forEach((satellite, sessionsList) -> {
@@ -215,6 +246,7 @@ public class SchedulerCalculationService {
                     actualSatelliteSessions.add(broadcastSession);
                     orderNumber.getAndIncrement();
                     previousEndSession = session.getEndSessionTime();
+                    session.setDataMb(MemoryUtils.readableMbSize(realSendingDelta));
                     satelliteFacilitySession =
                             findSatelliteFacilitySession(satellite, previousEndSession, endFreeInterval);
                 }
@@ -224,7 +256,7 @@ public class SchedulerCalculationService {
                     memoryOverflowData = Optional.of(endFreeInterval);
                 }
 
-                // если темное время суток,память не до конца свободна и пока удается найти сессию выгрузки данных-будем выгружать
+                // если темное время суток, память не до конца свободна и пока удается найти сессию выгрузки данных-будем выгружать
                 while (satelliteFacilitySession.isPresent()
                         && currentMemory <= TOTAL_MEMORY - 100
                         && IS_SENDING_TIME.test(previousEndSession)) {
@@ -244,6 +276,7 @@ public class SchedulerCalculationService {
                     actualSatelliteSessions.add(broadcastSession);
                     orderNumber.getAndIncrement();
                     previousEndSession = session.getEndSessionTime();
+                    session.setDataMb(MemoryUtils.readableMbSize(realSendingDelta));
                     satelliteFacilitySession =
                             findSatelliteFacilitySession(satellite, previousEndSession, endFreeInterval);
                 }
@@ -252,8 +285,8 @@ public class SchedulerCalculationService {
             reportsRows.add(new ReportsRow(satellite.getName(), memoryOverflowData, MemoryUtils.readableSize(memorySendingSum)));
             finishedScheduleMap.put(satellite, actualSatelliteSessions);
         });
-        alternativeCreateFileService.report(reportsRows);
-        alternativeCreateFileService.createFile(finishedScheduleMap);
+       alternativeCreateFileService.createFile(finishedScheduleMap, zipArchiver);
+       alternativeCreateFileService.report(reportsRows, zipArchiver);
     }
 
     /**

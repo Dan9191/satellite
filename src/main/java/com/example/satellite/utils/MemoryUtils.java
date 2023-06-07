@@ -61,4 +61,17 @@ public class MemoryUtils {
         return cnt_size;
     }
 
+    public static String readableMbSize(long fullSessionDeltaMemory) {
+        String cnt_size;
+        long bite = fullSessionDeltaMemory / 8;
+        long size_kb = bite / 1024;
+        long size_mb = size_kb / 1024;
+        if (size_mb > 0) {
+            cnt_size = size_mb + " MB";
+        } else {
+            cnt_size = size_kb + " KB";
+        }
+        return cnt_size;
+    }
+
 }

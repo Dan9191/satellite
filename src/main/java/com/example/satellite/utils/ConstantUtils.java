@@ -28,7 +28,27 @@ public class ConstantUtils {
     /**
      * Название файла с мини-отчетом.
      */
-    public static String REPORT_DIR = "report";
+    public static String REPORT = "report";
+
+    /**
+     * Общая папка для расписаний.
+     */
+    public static String MAIN_DIRECTORY = "data_satellite";
+
+    /**
+     * Название папки с расписанием сеансов наземного устройства.
+     */
+    public static String FACILITY_DIRECTORY = "Facility2Constellation";
+
+    /**
+     * Название папки с расписанием сеансов созвездия спутников.
+     */
+    public static String AREA_DIRECTORY = "Russia2Constellation";
+
+    /**
+     * Название папки с альтернативной формой записи расписания.
+     */
+    public static String ALTERNATIVE_DIRECTORY = "alternative-format";
 
     public static LocalTime START_SHOOTING_SESSION = LocalTime.parse("09:00:00");
 
