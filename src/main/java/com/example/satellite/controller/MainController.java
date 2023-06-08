@@ -47,11 +47,7 @@ public class MainController {
      */
     @GetMapping("/calculate-schedule")
     public ResponseEntity<InputStreamResource> calculateSchedule(Model model) throws IOException {
-        long startTime = System.currentTimeMillis();
-        ResponseEntity<InputStreamResource> archive = schedulerCalculationService.calculateSchedule();
-        String message = String.format("Успешно вычислено за %s секунд", (System.currentTimeMillis() - startTime)/1000);
-        model.addAttribute("message", message);
-        return archive;
+        return schedulerCalculationService.calculateSchedule();
     }
 
     /**

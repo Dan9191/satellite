@@ -37,10 +37,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
-import static com.example.satellite.utils.ConstantUtils.ALTERNATIVE_DIRECTORY;
-import static com.example.satellite.utils.ConstantUtils.AREA_DIRECTORY;
-import static com.example.satellite.utils.ConstantUtils.FACILITY_DIRECTORY;
 import static com.example.satellite.utils.ConstantUtils.IS_SENDING_TIME;
 import static com.example.satellite.utils.ConstantUtils.IS_SHOOTING_TIME;
 import static com.example.satellite.utils.ConstantUtils.MAIN_DIRECTORY;
@@ -101,7 +97,6 @@ public class SchedulerCalculationService {
      */
     public ResponseEntity<InputStreamResource> calculateSchedule() throws IOException {
         FileUtils.deleteQuietly(new File(String.format("%s.zip", MAIN_DIRECTORY)));
-    //public void calculateSchedule() throws IOException {
         long startTime = System.currentTimeMillis();
         log.info("Start process {}", LocalDateTime.now());
         log.info("Start calculated facility schedule ");
@@ -116,9 +111,6 @@ public class SchedulerCalculationService {
         log.info("Start calculated full schedule");
 
         Path mainDir = Files.createDirectories(Paths.get(MAIN_DIRECTORY));
-        Path areaDir = Files.createDirectories(Paths.get(MAIN_DIRECTORY, AREA_DIRECTORY));
-        Path facilityDir = Files.createDirectories(Paths.get(MAIN_DIRECTORY, FACILITY_DIRECTORY));
-        Path alternativeDir = Files.createDirectories(Paths.get(MAIN_DIRECTORY, ALTERNATIVE_DIRECTORY));
         File zip = new File(String.format("%s.zip", MAIN_DIRECTORY));
         ZipFile zipArchiver = new ZipFile(zip);
         zipArchiver.close();
