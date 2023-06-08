@@ -13,12 +13,14 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static com.example.satellite.utils.ConstantUtils.FACILITY_DIRECTORY;
@@ -54,14 +56,24 @@ public class FacilityFileService {
                 String fileName = String.format("%s.txt", facility.getName());
                 AtomicInteger orderNumb = new AtomicInteger();
                 StringBuilder stringBuilder = new StringBuilder();
+                AtomicLong totalDataTransferredPerPeriod = new AtomicLong(0L);
                 stringBuilder.append(facility.getName()).append(" - имя станции\r\n\n");
                 stringBuilder.append("-------------------------\r\n\n");
                 stringBuilder.append(String.format("Access%18s %20s %20s %20s %20s\r\n\n",
                         "Start Session Time", "End Session Time", "Duration", "Sat name", "Data mb"));
                 String sessionsRows = sessionsList.stream()
-                        .map(sfs -> orderNumb.incrementAndGet() + "    " + sfs.toString())
+                        .map(sfs -> {
+                            String row = orderNumb.incrementAndGet() + "    " + sfs.toString();
+                            if (isTheLastSessionOfTheDay(sessionsList, sessionsList.indexOf(sfs))){
+                                Long transferredPerDay = calculateTotalDataTransferredPerDay(sessionsList, sfs.getStartSessionTime());
+                                row += "\n\nTotal data transferred per day: " + transferredPerDay + " MB\n";
+                                totalDataTransferredPerPeriod.addAndGet(transferredPerDay);
+                            }
+                            return row;
+                        })
                         .collect(Collectors.joining("\n"));
                 stringBuilder.append(sessionsRows).append("\n\n");
+                stringBuilder.append("Total data transferred per period: " + totalDataTransferredPerPeriod.get() + " MB\n");
                 ZipParameters zipParameters = new ZipParameters();
                 zipParameters.setFileNameInZip(FACILITY_DIRECTORY + File.separator + fileName);
                 zipArchiver.addStream(new ByteArrayInputStream(stringBuilder.toString().getBytes(StandardCharsets.UTF_8)), zipParameters);
@@ -69,5 +81,20 @@ public class FacilityFileService {
                 throw new RuntimeException(e);
             }
         } );
+    }
+
+    private boolean isTheLastSessionOfTheDay(List <SatelliteFacilitySession> facilitySessions, int index){
+        return index == facilitySessions.size() - 1 ||
+                !facilitySessions.get(index).getStartSessionTime().toLocalDate()
+                        .equals(facilitySessions.get(index + 1).getStartSessionTime().toLocalDate());
+    }
+
+    private Long calculateTotalDataTransferredPerDay(List<SatelliteFacilitySession> facilitySessions,
+                                                     LocalDateTime date){
+        return facilitySessions.stream()
+                .filter(sfs -> sfs.getEndSessionTime().toLocalDate().equals(date.toLocalDate()))
+                .filter(sfs -> sfs.getDataMb() != null)
+                .mapToLong(sfs -> Long.parseLong(sfs.getDataMb().substring(0, sfs.getDataMb().length() - 3)))
+                .sum();
     }
 }
