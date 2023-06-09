@@ -3,6 +3,9 @@ package com.example.satellite.utils;
 import static com.example.satellite.utils.ConstantUtils.KINOSAT;
 import static com.example.satellite.utils.ConstantUtils.ZORKIY;
 
+/**
+ * Утилита для классификации спутника.
+ */
 public class ValidateUtils {
 
     public static boolean kinosatValidName(String name) {
