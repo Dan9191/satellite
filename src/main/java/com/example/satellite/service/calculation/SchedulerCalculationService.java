@@ -111,7 +111,7 @@ public class SchedulerCalculationService {
         facilityFileService.createFile(actualFacilitySessionsMap, zipArchiver);
         FileUtils.deleteQuietly(mainDir.toFile());
         log.info("End calculated memory Overflow Time {}", System.currentTimeMillis() - stageTime );
-        return HttpFileUtils.uploadFile(zipArchiver.getFile(), "calculatedSchedule");
+        return HttpFileUtils.uploadFile(zipArchiver.getFile(), "calculatedSchedule.zip");
     }
 
     /**

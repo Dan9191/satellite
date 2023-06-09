@@ -72,14 +72,14 @@ public class UploadFacilityFileService {
         //проверка начилия файла в БД
         if (uploadedFilesRepository.findByName(baseFileName).isPresent()) {
             log.error("file '{}' has already been loaded into the database.", baseFileName);
-            throw new IOException("Файл с таким именем уже загружен в базу данных.");
+            throw new IOException(String.format("Файл '%s' уже загружен в базу данных.", baseFileName));
         }
         String facilityName = baseFileName.replaceAll(FACILITY_NAME_PREFIX, "");
         List<String> allRows = new BufferedReader(new InputStreamReader(file.getInputStream())).lines().toList();
         Map<String, List<CommunicationSession>> sessionMap = parseFile(allRows, baseFileName);
 
         Facility facility = facilityRepository.findByName(facilityName).orElse(new Facility(facilityName));
-        facilityRepository.save(facility);
+
         sessionMap.forEach((key, value) -> {
             Satellite satellite;
             if (satelliteRepository.findFirstByName(key).isEmpty()) {
@@ -98,7 +98,7 @@ public class UploadFacilityFileService {
             } else {
                 satellite = satelliteRepository.findFirstByName(key).get();
             }
-
+            facilityRepository.save(facility);
             List<SatelliteFacilitySession> sessionList = value.stream()
                     .map(sessionData -> new SatelliteFacilitySession(satellite, facility, sessionData))
                     .toList();

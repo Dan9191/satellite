@@ -66,7 +66,7 @@ public class UploadAreaFileService {
         //проверка начилия файла в БД
         if (uploadedFilesRepository.findByName(baseFileName).isPresent()) {
             log.error("file '{}' has already been loaded into the database.", baseFileName);
-            throw new IOException("Файл с таким именем уже загружен в базу данных.");
+            throw new IOException(String.format("Файл '%s' уже загружен в базу данных.", baseFileName));
         }
         String areaName = baseFileName.replaceAll(AREA_NAME_PREFIX, "");
         List<String> allRows = new BufferedReader(new InputStreamReader(file.getInputStream())).lines().toList();
