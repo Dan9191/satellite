@@ -37,7 +37,7 @@ public class AlternativeCreateFileService {
     public void createFile(Map<Satellite, List<CalculatedCommunicationSession>> finishedScheduleMap, ZipFile zipArchiver) {
         finishedScheduleMap.forEach((satellite, calculatedCommunicationSessions) -> {
             try {
-                String fileName = String.format("%s.txt", satellite.getName());
+                String fileName = String.format("Drop_%s.txt", satellite.getName());
                 StringBuilder comSessions = new StringBuilder();
                 comSessions.append(String.format("%20s %30s %30s %20s %30s %30s %30s\r\n\n", "Session With",
                         "Start Session Time", "End Session Time", "Duration", "Change in memory per session",
