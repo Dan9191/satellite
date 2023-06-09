@@ -33,22 +33,22 @@ public class ConstantUtils {
     /**
      * Общая папка для расписаний.
      */
-    public static String MAIN_DIRECTORY = "data_satellite";
+    public static String MAIN_DIRECTORY = "Result";
 
     /**
      * Название папки с расписанием сеансов наземного устройства.
      */
-    public static String FACILITY_DIRECTORY = "Facility2Constellation";
+    public static String FACILITY_DIRECTORY = "Ground";
 
     /**
      * Название папки с расписанием сеансов созвездия спутников.
      */
-    public static String AREA_DIRECTORY = "Russia2Constellation";
+    public static String AREA_DIRECTORY = "Camera";
 
     /**
      * Название папки с альтернативной формой записи расписания.
      */
-    public static String ALTERNATIVE_DIRECTORY = "alternative-format";
+    public static String ALTERNATIVE_DIRECTORY = "Drop";
 
     public static LocalTime START_SHOOTING_SESSION = LocalTime.parse("09:00:00");
 

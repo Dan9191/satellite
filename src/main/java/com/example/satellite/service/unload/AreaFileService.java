@@ -55,10 +55,10 @@ public class AreaFileService {
         //формируем файл
         actualAreaSessionsMap.forEach((area, satelliteSessionsMap) -> {
             try {
-                String fileName = String.format("%s.txt", area.getName());
                 StringBuilder sessions = new StringBuilder();
                 Set<Satellite> satelliteSet = satelliteSessionsMap.keySet();
                 for (Satellite satellite: satelliteSet) {
+                    String fileName = String.format("Camera_%s.txt", satellite.getName());
                     sessions.append("\n").append(satellite.getName()).append("\n\n");
                     sessions.append(String.format("Access%18s %30s %30s %20s\r\n\n", "Order Number", "Start Session Time", "End Session Time", "Duration"));
                     String sessionsRows = satelliteSessionsMap.get(satellite).stream()
@@ -67,10 +67,10 @@ public class AreaFileService {
                                     sas.toString())
                             .collect(Collectors.joining("\n"));
                     sessions.append(sessionsRows).append("\n\n");
-                }
+
                 ZipParameters zipParameters = new ZipParameters();
                 zipParameters.setFileNameInZip(AREA_DIRECTORY + File.separator + fileName);
-                zipArchiver.addStream(new ByteArrayInputStream(sessions.toString().getBytes(StandardCharsets.UTF_8)), zipParameters);
+                zipArchiver.addStream(new ByteArrayInputStream(sessions.toString().getBytes(StandardCharsets.UTF_8)), zipParameters);}
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

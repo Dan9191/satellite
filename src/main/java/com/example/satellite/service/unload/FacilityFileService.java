@@ -53,7 +53,7 @@ public class FacilityFileService {
 
         facilityMap.forEach((facility, sessionsList) -> {
             try {
-                String fileName = String.format("%s.txt", facility.getName());
+                String fileName = String.format("Ground_%s.txt", facility.getName());
                 AtomicInteger orderNumb = new AtomicInteger();
                 StringBuilder stringBuilder = new StringBuilder();
                 AtomicLong totalDataTransferredPerPeriod = new AtomicLong(0L);
