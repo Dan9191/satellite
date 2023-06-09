@@ -30,7 +30,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,25 +81,17 @@ public class SchedulerCalculationService {
     private final FacilityFileService facilityFileService;
 
     /**
-     * Список доступных сеансов связи спутника и приемника земли.
-     */
-    private Map<Facility, List<SatelliteFacilitySession>> freeFacilitySessionsMap = new HashMap<>();
-
-    /**
-     * Список сеансов связи спутника и приемника земли, которые произойдут реально.
-     */
-    private Map<Facility, Map<Satellite, List<SatelliteFacilitySession>>> actualFacilitySessionsMap = new HashMap<>();
-
-
-    /**
      * Набросок метода для вычисления времени конца памяти у каждого из спутников.
      */
     public ResponseEntity<InputStreamResource> calculateSchedule() throws IOException {
+        //Список возможных сеансов связи спутника и приемника земли.
+        Map<Facility, List<SatelliteFacilitySession>> freeFacilitySessionsMap = findAllFacilitySessionsMap();
+        //Список сеансов связи спутника и приемника земли, которые произойдут реально.
+        Map<Facility, Map<Satellite, List<SatelliteFacilitySession>>> actualFacilitySessionsMap = new HashMap<>();
         FileUtils.deleteQuietly(new File(String.format("%s.zip", MAIN_DIRECTORY)));
         long startTime = System.currentTimeMillis();
         log.info("Start process {}", LocalDateTime.now());
         log.info("Start calculated facility schedule ");
-        freeFacilitySessionsMap = findAllFacilitySessionsMap();
         long stageTime = System.currentTimeMillis();
         log.info("End calculated facility schedule {} ms", stageTime - startTime);
 
@@ -114,11 +105,7 @@ public class SchedulerCalculationService {
         File zip = new File(String.format("%s.zip", MAIN_DIRECTORY));
         ZipFile zipArchiver = new ZipFile(zip);
         zipArchiver.close();
-        memoryOverflowTime(satelliteAreaSessionsMap, zipArchiver);
-
-        areaFileService.createFile(satelliteAreaSessionsMap, zipArchiver);
-        facilityFileService.createFile(actualFacilitySessionsMap, zipArchiver);
-
+        memoryOverflowTime(satelliteAreaSessionsMap, freeFacilitySessionsMap, actualFacilitySessionsMap, zipArchiver);
 
         areaFileService.createFile(satelliteAreaSessionsMap, zipArchiver);
         facilityFileService.createFile(actualFacilitySessionsMap, zipArchiver);
@@ -166,10 +153,15 @@ public class SchedulerCalculationService {
     /**
      * Вычисляет время переполнения памяти.
      *
-     * @param satelliteAreaSessionsMap Мапа сеансов съемки спутника, где key - спутник, value - сеансы съемки.
-     * @param zipArchiver              Архив с отчетами.
+     * @param satelliteAreaSessionsMap  Мапа сеансов съемки спутника, где key - спутник, value - сеансы съемки.
+     * @param freeFacilitySessionsMap   Список возможных сеансов связи спутника и приемника земли.
+     * @param actualFacilitySessionsMap Список сеансов связи спутника и приемника земли, которые произойдут реально.
+     * @param zipArchiver               Архив с отчетами.
      */
-    private void memoryOverflowTime(Map<Satellite, List<SatelliteAreaSession>> satelliteAreaSessionsMap, ZipFile zipArchiver) {
+    private void memoryOverflowTime(Map<Satellite, List<SatelliteAreaSession>> satelliteAreaSessionsMap,
+                                    Map<Facility, List<SatelliteFacilitySession>> freeFacilitySessionsMap,
+                                    Map<Facility, Map<Satellite, List<SatelliteFacilitySession>>> actualFacilitySessionsMap,
+                                    ZipFile zipArchiver) {
         Map<Satellite, List<CalculatedCommunicationSession>> finishedScheduleMap = new HashMap<>();
         List<ReportsRow> reportsRows = new ArrayList<>();
         satelliteAreaSessionsMap.forEach((satellite, sessionsList) -> {
@@ -204,6 +196,7 @@ public class SchedulerCalculationService {
                 if (previousEndSession.isAfter(previousSession.getStartSessionTime())) {
                     continue;
                 }
+                //количество отснятой информации
                 long sessionMemorySpending = (long) previousSession.getDuration() * shootingMemorySpeed;
                 currentMemory = MemoryUtils.memorySubtraction(currentMemory, sessionMemorySpending);
                 //производим вычисление первой сессии съемки земли
@@ -217,9 +210,19 @@ public class SchedulerCalculationService {
                         ));
                 orderNumber.getAndIncrement();
                 previousEndSession = previousSession.getEndSessionTime();
+
+                //если произошло первое опустошение памяти - сохраняем такую дату
+                if (currentMemory == 0L && memoryOverflowData.isEmpty()) {
+                    memoryOverflowData = Optional.of(endFreeInterval);
+                }
+
                 //производим вычисление второй сессии передачи данных на землю (если получилось)
                 Optional<SatelliteFacilitySession> satelliteFacilitySession =
-                        findSatelliteFacilitySession(satellite, startFreeInterval, endFreeInterval);
+                        findSatelliteFacilitySession(satellite,
+                                startFreeInterval,
+                                endFreeInterval,
+                                freeFacilitySessionsMap,
+                                actualFacilitySessionsMap);
                 // если сессию передачи удалось найти - восстанавливаем объем текущей памяти
                 if (satelliteFacilitySession.isPresent()) {
                     SatelliteFacilitySession session = satelliteFacilitySession.get();
@@ -239,19 +242,20 @@ public class SchedulerCalculationService {
                     orderNumber.getAndIncrement();
                     previousEndSession = session.getEndSessionTime();
                     session.setDataMb(MemoryUtils.readableMbSize(realSendingDelta));
-                    satelliteFacilitySession =
-                            findSatelliteFacilitySession(satellite, previousEndSession, endFreeInterval);
-                }
-
-                //если произошло первое опустошение памяти - сохраняем такую дату
-                if (currentMemory == 0L && memoryOverflowData.isEmpty()) {
-                    memoryOverflowData = Optional.of(endFreeInterval);
                 }
 
                 // если темное время суток, память не до конца свободна и пока удается найти сессию выгрузки данных-будем выгружать
-                while (satelliteFacilitySession.isPresent()
-                        && currentMemory <= TOTAL_MEMORY - 100
+                while (currentMemory <= TOTAL_MEMORY - 100
                         && IS_SENDING_TIME.test(previousEndSession)) {
+                    satelliteFacilitySession =
+                            findSatelliteFacilitySession(satellite,
+                                    previousEndSession,
+                                    endFreeInterval,
+                                    freeFacilitySessionsMap,
+                                    actualFacilitySessionsMap);
+                    if (satelliteFacilitySession.isEmpty()) {
+                        break;
+                    }
                     SatelliteFacilitySession session = satelliteFacilitySession.get();
                     long sessionMemoryIncome = (long) session.getDuration() * dataTransferSpeed;
                     long memoryAfterSending = MemoryUtils.memorySum(currentMemory, sessionMemoryIncome, TOTAL_MEMORY);
@@ -269,8 +273,6 @@ public class SchedulerCalculationService {
                     orderNumber.getAndIncrement();
                     previousEndSession = session.getEndSessionTime();
                     session.setDataMb(MemoryUtils.readableMbSize(realSendingDelta));
-                    satelliteFacilitySession =
-                            findSatelliteFacilitySession(satellite, previousEndSession, endFreeInterval);
                 }
             }
             //копим информацию для миниотчета
@@ -284,44 +286,86 @@ public class SchedulerCalculationService {
     /**
      * Вычисление подходящего сеанса связи для спутника и земли. Найденный сеанс сохраняется в общую мапу расписаний.
      *
-     * @param satellite         Спутник, для которого ищем расписание.
-     * @param startFreeInterval Начала интервала, в который спутник доступен для передачи данных.
-     * @param endFreeInterval   Конец интервала, в который спутник доступен для передачи данных.
+     * @param satellite                 Спутник, для которого ищем расписание.
+     * @param startFreeInterval         Начала интервала, в который спутник доступен для передачи данных.
+     * @param endFreeInterval           Конец интервала, в который спутник доступен для передачи данных.
+     * @param freeFacilitySessionsMap   Список возможных сеансов связи спутника и приемника земли.
+     * @param actualFacilitySessionsMap Список сеансов связи спутника и приемника земли, которые произойдут реально.
      * @return Сеанс связи спутника и земли
      */
     private synchronized Optional<SatelliteFacilitySession> findSatelliteFacilitySession(Satellite satellite,
-                                                                            LocalDateTime startFreeInterval,
-                                                                            LocalDateTime endFreeInterval) {
+                                                                                         LocalDateTime startFreeInterval,
+                                                                                         LocalDateTime endFreeInterval,
+                                                                                         Map<Facility, List<SatelliteFacilitySession>> freeFacilitySessionsMap,
+                                                                                         Map<Facility, Map<Satellite, List<SatelliteFacilitySession>>> actualFacilitySessionsMap) {
         //поиск подходящих сеансов
-        List<SatelliteFacilitySession> concurrentSessionList = new ArrayList<>();
-        freeFacilitySessionsMap.forEach((facility, satelliteFacilitySessions) -> {
-            Optional<SatelliteFacilitySession> optSession = satelliteFacilitySessions.stream()
-                    .filter(session -> session.getSatellite().equals(satellite))
-                    .filter(session -> session.getStartSessionTime().isAfter(startFreeInterval))
-                    .filter(session -> session.getStartSessionTime().isBefore(endFreeInterval))
-                    .findFirst();
-            optSession.ifPresent(concurrentSessionList::add);
-        });
-        //если не удалось найти запись - вернем пустой Optional
-        if (concurrentSessionList.isEmpty()) {
-            return Optional.empty();
+        Optional<SatelliteFacilitySession> bestSessionOpt = findBestSession(
+                satellite,
+                startFreeInterval,
+                endFreeInterval,
+                freeFacilitySessionsMap
+        );
+
+        if (bestSessionOpt.isEmpty()) {
+            return bestSessionOpt;
         }
-        //выбор сеанса, который наступит раньше всех
-        concurrentSessionList.sort(Comparator.comparing(SatelliteFacilitySession::getStartSessionTime));
-        SatelliteFacilitySession bestSession = concurrentSessionList.get(0);
+        //получаем данные самого подходящего сеанса
+        SatelliteFacilitySession bestSession = bestSessionOpt.get();
         Facility currentFacility = bestSession.getFacility();
         LocalDateTime startBusyTime = bestSession.getStartSessionTime();
         LocalDateTime endBusyTime = bestSession.getEndSessionTime();
-        //удаляем из доступного расписания сеансы для конкретного примника в интервале действия текущего сеанса
+        //удаляем из доступного расписания сеансы для конкретного наземного приемника в интервале действия найденного сеанса
         List<SatelliteFacilitySession> droppedSessions = freeFacilitySessionsMap.get(currentFacility).stream()
                 .filter(session -> session.getStartSessionTime().isAfter(startBusyTime)
                         && session.getStartSessionTime().isBefore(endBusyTime))
                 .toList();
         freeFacilitySessionsMap.get(currentFacility).removeAll(droppedSessions);
         //добавляем в итоговое расписание найденный сеанс спутник-приемник
-        if (actualFacilitySessionsMap.containsKey(currentFacility)) {
+        saveSendSession(bestSession, actualFacilitySessionsMap);
+        return Optional.of(bestSession);
+    }
+
+    /**
+     * Поиск наилучшего сеанса передачи данных
+     *
+     * @param satellite               Спутник, для которого ищем расписание.
+     * @param startFreeInterval       Начала интервала, в который спутник доступен для передачи данных.
+     * @param endFreeInterval         Конец интервала, в который спутник доступен для передачи данных.
+     * @param freeFacilitySessionsMap Список возможных сеансов связи спутника и приемника земли.
+     * @return результат поиска.
+     */
+    private Optional<SatelliteFacilitySession> findBestSession(Satellite satellite,
+                                                               LocalDateTime startFreeInterval,
+                                                               LocalDateTime endFreeInterval,
+                                                               Map<Facility, List<SatelliteFacilitySession>> freeFacilitySessionsMap) {
+        Optional<SatelliteFacilitySession> bestSessionOpt = Optional.empty();
+        for (Facility facility: freeFacilitySessionsMap.keySet()) {
+            Optional<SatelliteFacilitySession> optSession = freeFacilitySessionsMap.get(facility).stream()
+                    .filter(session -> session.getSatellite().equals(satellite))
+                    .filter(session -> session.getStartSessionTime().isAfter(startFreeInterval))
+                    .filter(session -> session.getStartSessionTime().isBefore(endFreeInterval))
+                    .findFirst();
+            if (optSession.isPresent()) {
+                bestSessionOpt = bestSessionOpt.isEmpty() ?
+                        optSession : Optional.of(getBetterSession(bestSessionOpt.get(), optSession.get()));
+            }
+        }
+        return bestSessionOpt;
+    }
+
+    /**
+     * Сохраняем найденную сессию передачи данных в итоговое расписание.
+     *
+     * @param bestSession               Сеанс передачи данных.
+     * @param actualFacilitySessionsMap Список сеансов связи спутника и приемника земли, которые произойдут реально.
+     */
+    private void saveSendSession(SatelliteFacilitySession bestSession,
+                                 Map<Facility, Map<Satellite, List<SatelliteFacilitySession>>> actualFacilitySessionsMap) {
+        Satellite satellite = bestSession.getSatellite();
+        Facility facility = bestSession.getFacility();
+        if (actualFacilitySessionsMap.containsKey(facility)) {
             Map<Satellite, List<SatelliteFacilitySession>> actualSessions =
-                    actualFacilitySessionsMap.get(currentFacility);
+                    actualFacilitySessionsMap.get(facility);
             if (actualSessions.containsKey(satellite)) {
                 actualSessions.get(satellite).add(bestSession);
             } else {
@@ -334,8 +378,21 @@ public class SchedulerCalculationService {
             bestSessionList.add(bestSession);
             Map<Satellite, List<SatelliteFacilitySession>> newSatelliteSession = new HashMap<>();
             newSatelliteSession.put(satellite, bestSessionList);
-            actualFacilitySessionsMap.put(currentFacility, newSatelliteSession);
+            actualFacilitySessionsMap.put(facility, newSatelliteSession);
         }
-        return Optional.of(bestSession);
+    }
+
+
+    /**
+     * Возврат сессии передачи данных, которая началась раньше.
+     *
+     * @param ses1 Первая сессия.
+     * @param ses2 Вторая сессия.
+     * @return результат.
+     */
+    public SatelliteFacilitySession getBetterSession(SatelliteFacilitySession ses1, SatelliteFacilitySession ses2) {
+        LocalDateTime ses1StartSession = ses1.getStartSessionTime();
+        LocalDateTime ses2StartSession = ses2.getStartSessionTime();
+        return ses1StartSession.isBefore(ses2StartSession) ? ses1 : ses2;
     }
 }

@@ -27,6 +27,8 @@ public class HttpFileUtils {
         fileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
         String contentDisposition = String.format("attachment; filename=\"%s\"", fileName);
         return (ResponseEntity.ok().header("Content-Disposition", contentDisposition))
-                .contentLength(file.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).body(resource);
+                .contentLength(file.length())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
 }
