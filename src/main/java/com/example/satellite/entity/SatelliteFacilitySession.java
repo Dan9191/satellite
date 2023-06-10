@@ -61,7 +61,7 @@ public class SatelliteFacilitySession {
 
     @Override
     public String toString() {
-        return String.format("%20s %20s %20s %20s %20s", startSessionTime, endSessionTime, duration,
+        return String.format("%20s %30s %20s %20s %20s", startSessionTime, endSessionTime, duration,
                 satellite.getName(), dataMb);
     }
 }
