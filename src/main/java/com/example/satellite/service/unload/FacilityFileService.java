@@ -59,7 +59,7 @@ public class FacilityFileService {
                 AtomicLong totalDataTransferredPerPeriod = new AtomicLong(0L);
                 stringBuilder.append(facility.getName()).append(" - имя станции\r\n\n");
                 stringBuilder.append("-------------------------\r\n\n");
-                stringBuilder.append(String.format("Access%18s %20s %20s %20s %20s\r\n\n",
+                stringBuilder.append(String.format("Access %20s %30s %20s %20s %20s\r\n\n",
                         "Start Session Time", "End Session Time", "Duration", "Sat name", "Data mb"));
                 String sessionsRows = sessionsList.stream()
                         .map(sfs -> {
