@@ -5,6 +5,7 @@ import com.example.satellite.entity.SatelliteAreaSession;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -19,9 +20,9 @@ public class ConstantUtils {
 
     public static String SATELLITE_NAME_PREFIX = "Satellite-";
 
-    public static String KINOSAT = "KinoSat";
+    public static List<String> SATELLITE_TYPE = List.of("01", "02", "03", "04", "05", "06", "07", "08", "09",
+            "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20");
 
-    public static String ZORKIY = "Zorkiy";
 
     public static String TO = "-To-";
 
