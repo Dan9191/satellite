@@ -1,18 +1,17 @@
 package com.example.satellite.utils;
 
-import static com.example.satellite.utils.ConstantUtils.KINOSAT;
-import static com.example.satellite.utils.ConstantUtils.ZORKIY;
+import static com.example.satellite.utils.ConstantUtils.*;
 
 /**
  * Утилита для классификации спутника.
  */
 public class ValidateUtils {
 
-    public static boolean kinosatValidName(String name) {
-        return name.contains(KINOSAT);
+    public static boolean kinosatValidName(String satelliteNumber) {
+        return SATELLITE_TYPE.indexOf(satelliteNumber) < 5;
     }
 
-    public static boolean zorkiyValidName(String name) {
-        return name.contains(ZORKIY);
+    public static boolean zorkiyValidName(String satelliteNumber) {
+        return SATELLITE_TYPE.indexOf(satelliteNumber) > 4;
     }
 }
