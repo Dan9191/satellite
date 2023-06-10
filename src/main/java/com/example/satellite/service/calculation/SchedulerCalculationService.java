@@ -5,7 +5,6 @@ import com.example.satellite.entity.Satellite;
 import com.example.satellite.entity.SatelliteAreaSession;
 import com.example.satellite.entity.SatelliteFacilitySession;
 import com.example.satellite.models.CalculatedCommunicationSession;
-import com.example.satellite.models.Day;
 import com.example.satellite.models.ReportsRow;
 import com.example.satellite.repository.FacilityRepository;
 import com.example.satellite.repository.SatelliteAreaSessionRepository;
@@ -29,7 +28,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,10 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
-import static com.example.satellite.utils.ConstantUtils.IS_SENDING_TIME;
-import static com.example.satellite.utils.ConstantUtils.IS_SHOOTING_TIME;
 import static com.example.satellite.utils.ConstantUtils.MAIN_DIRECTORY;
 
 @Service
@@ -144,9 +139,7 @@ public class SchedulerCalculationService {
         Map<Satellite, List<SatelliteAreaSession>> areaScheduleMap = new HashMap<>();
         satelliteList.forEach(satellite -> {
             List<SatelliteAreaSession> areaSessions =
-                    satelliteAreaSessionRepository.findAllBySatelliteOrderByStartSessionTime(satellite).stream()
-                            .filter(IS_SHOOTING_TIME)
-                            .toList();
+                    satelliteAreaSessionRepository.findAllBySatelliteOrderByStartSessionTime(satellite);
                     areaScheduleMap.put(satellite, areaSessions);
                 }
         );
@@ -249,7 +242,7 @@ public class SchedulerCalculationService {
 
                 // если темное время суток, память не до конца свободна и пока удается найти сессию выгрузки данных-будем выгружать
                 while (currentMemory <= TOTAL_MEMORY - 100
-                        && IS_SENDING_TIME.test(previousEndSession)) {
+                        && startFreeInterval.toLocalDate() != endFreeInterval.toLocalDate()) {
                     satelliteFacilitySession =
                             findSatelliteFacilitySession(satellite,
                                     previousEndSession,
@@ -397,22 +390,6 @@ public class SchedulerCalculationService {
         LocalDateTime ses1StartSession = ses1.getStartSessionTime();
         LocalDateTime ses2StartSession = ses2.getStartSessionTime();
         return ses1StartSession.isBefore(ses2StartSession) ? ses1 : ses2;
-    }
-
-    /**
-     * Группируем список расписаний съемки по дням.
-     *
-     * @param sessionList Список расписаний съемки.
-     * @return расписание по дням.
-     */
-    private List<Day> groupByDay(List<SatelliteAreaSession> sessionList) {
-        Map<LocalDate, List<SatelliteAreaSession>> dateListMap = sessionList.stream()
-                .collect(Collectors.groupingBy(satelliteAreaSession -> satelliteAreaSession.getStartSessionTime().toLocalDate()));
-        List<Day> days = new ArrayList<>();
-        dateListMap.keySet().forEach(day -> {
-            days.add(new Day(day.toString(), dateListMap.get(day)));
-        });
-        return days;
     }
 
 }

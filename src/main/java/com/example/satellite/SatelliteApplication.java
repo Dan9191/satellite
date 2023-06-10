@@ -2,10 +2,8 @@ package com.example.satellite;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 @SpringBootApplication
-@ConfigurationPropertiesScan("com.example.satellite.config")
 public class SatelliteApplication {
 
 	public static void main(String[] args) {

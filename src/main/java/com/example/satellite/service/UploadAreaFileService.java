@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 
-import static com.example.satellite.utils.ConstantUtils.AREA_NAME_PREFIX;
 import static com.example.satellite.utils.ConstantUtils.DATE_TIME_FORMATTER;
 import static com.example.satellite.utils.ConstantUtils.END_SATELLITE_PATTERN;
 import static com.example.satellite.utils.ConstantUtils.SATELLITE_NAME_PREFIX;
@@ -68,17 +67,18 @@ public class UploadAreaFileService {
             log.error("file '{}' has already been loaded into the database.", baseFileName);
             throw new IOException(String.format("Файл '%s' уже загружен в базу данных.", baseFileName));
         }
-        String areaName = baseFileName.replaceAll(AREA_NAME_PREFIX, "");
         List<String> allRows = new BufferedReader(new InputStreamReader(file.getInputStream())).lines().toList();
         Map<String, List<CommunicationSession>> sessionMap = parseFile(allRows);
-        Area area = areaRepository.findByName(areaName).orElse(new Area(areaName));
-        areaRepository.save(area);
+
         sessionMap.forEach((key, value) -> {
             Satellite satellite;
+            String areaName = key.substring(10, 12);
+            Area area = areaRepository.findByName(areaName).orElse(new Area(areaName));
+            areaRepository.save(area);
             if (satelliteRepository.findFirstByName(key).isEmpty()) {
                 satellite = new Satellite();
-                boolean kinosatSign = ValidateUtils.kinosatValidName(key);
-                boolean zorkiySign = ValidateUtils.zorkiyValidName(key);
+                boolean kinosatSign = ValidateUtils.kinosatValidName(areaName);
+                boolean zorkiySign = ValidateUtils.zorkiyValidName(areaName);
                 if (kinosatSign && !zorkiySign) {
                     satellite.setSatelliteType(satelliteTypeRepository.getReferenceById(1));
                 } else if (!kinosatSign && zorkiySign) {
